@@ -34,14 +34,16 @@ async def async_setup_entry(
 
     node = coordinator.nodes[0]
     node_id = node["device_id"]
+    features = node.get("features", [])
 
     switches: list[TinxySwitch] = []
     for i, sub_dev in enumerate(node.get("devices", [])):
         dev_name = sub_dev.get("name") or f"Relay {i + 1}"
         dev_type = sub_dev.get("type") or "Switch"
 
-        # Fans and locks have dedicated platforms
-        if str(dev_type).lower() == "fan" or "fan" in str(dev_name).lower():
+        # Only skip if the device physically has hardware fan capabilities
+        has_fan_feature = i < len(features) and "FAN" in str(features[i]).upper()
+        if has_fan_feature:
             continue
 
         switches.append(
@@ -73,7 +75,7 @@ class TinxySwitch(CoordinatorEntity[TinxyUpdateCoordinator], SwitchEntity):
         self.relay_number = relay_number
         self.mqtt_pass = mqtt_pass
 
-        self._attr_unique_id = f"{node_id}_relay_{relay_number}"
+        self._attr_unique_id = f"{node_id}_{relay_number + 1}"
         self._attr_name = name
         self._dev_key = f"{name}_{relay_number}"
 

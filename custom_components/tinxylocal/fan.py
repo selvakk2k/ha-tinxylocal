@@ -37,13 +37,15 @@ async def async_setup_entry(
 
     node = coordinator.nodes[0]
     node_id = node["device_id"]
+    features = node.get("features", [])
 
     fans: list[TinxyFan] = []
     for i, sub_dev in enumerate(node.get("devices", [])):
         dev_name = sub_dev.get("name") or f"Fan {i + 1}"
-        dev_type = sub_dev.get("type") or "Switch"
 
-        if str(dev_type).lower() == "fan" or "fan" in str(dev_name).lower():
+        # Only create fan entity if the hardware physically has FAN capability
+        has_fan_feature = i < len(features) and "FAN" in str(features[i]).upper()
+        if has_fan_feature:
             fans.append(TinxyFan(coordinator, hub, node_id, dev_name, i, mqtt_pass))
 
     async_add_entities(fans)
@@ -75,7 +77,7 @@ class TinxyFan(CoordinatorEntity[TinxyUpdateCoordinator], FanEntity):
         self.relay_number = relay_number
         self.mqtt_pass = mqtt_pass
 
-        self._attr_unique_id = f"{node_id}_fan_{relay_number}"
+        self._attr_unique_id = f"{node_id}_{relay_number + 1}_fan"
         self._attr_name = name
         self._dev_key = f"{name}_{relay_number}"
         self._last_known_percentage = 66

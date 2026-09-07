@@ -127,3 +127,61 @@ async def test_migration_v1_to_v2_strips_api_key():
     assert "api_key" not in updated_data
     assert updated_data["host"] == "192.168.0.163"
     assert updated_version == 2
+
+
+@pytest.mark.asyncio
+async def test_switch_unique_id_and_hardware_feature_check():
+    """Verify switches use 1-indexed unique IDs and pure-switch hardware does not spawn fans."""
+    from custom_components.tinxylocal.switch import async_setup_entry as switch_setup_entry
+    from custom_components.tinxylocal.fan import async_setup_entry as fan_setup_entry
+    from custom_components.tinxylocal.const import DOMAIN
+
+    mock_hass = MagicMock()
+    mock_entry = MagicMock()
+    mock_entry.entry_id = "test_entry"
+    mock_entry.data = {
+        "device": {
+            "typeId": {
+                "name": "WIFI_2SWITCH_V3",
+                "features": ["SWITCH|RECIEVER", "SWITCH"],  # Pure switch, no FAN feature
+            }
+        },
+        "mqtt_pass": "pass123",
+    }
+
+    mock_coordinator = MagicMock()
+    mock_coordinator.nodes = [
+        {
+            "device_id": "test_node_1",
+            "name": "Living Room",
+            "features": ["SWITCH|RECIEVER", "SWITCH"],
+            "devices": [
+                {"name": "Foyer Light", "type": "Switch"},
+                {"name": "Relay 2", "type": "Fan"},  # User labeled Fan, but hardware is Switch
+            ],
+        }
+    ]
+
+    mock_hub = MagicMock()
+    mock_hass.data = {
+        DOMAIN: {
+            "test_entry": {
+                "coordinator": mock_coordinator,
+                "hubs": [mock_hub],
+            }
+        }
+    }
+
+    added_switches = []
+    added_fans = []
+
+    await switch_setup_entry(mock_hass, mock_entry, lambda ents: added_switches.extend(ents))
+    await fan_setup_entry(mock_hass, mock_entry, lambda ents: added_fans.extend(ents))
+
+    # Since hardware features don't have FAN, both relays should be switches
+    assert len(added_switches) == 2
+    assert len(added_fans) == 0
+
+    # Verify 1-indexed unique IDs matching upstream arevindh/tinxylocal
+    assert added_switches[0].unique_id == "test_node_1_1"
+    assert added_switches[1].unique_id == "test_node_1_2"
