@@ -1,0 +1,11 @@
+[project]
+name = "ha-tinxylocal"
+version = "1.0.0"
+description = "Modern, pure-Python local Home Assistant integration for Tinxy smart devices."
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]

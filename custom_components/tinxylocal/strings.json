@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tinxy Local Setup",
+        "description": "Choose how you want to add your Tinxy device.",
+        "data": {
+          "setup_mode": "Setup Method"
+        }
+      },
+      "cloud": {
+        "title": "Cloud-Assisted Key Retrieval",
+        "description": "Enter your Tinxy Cloud API Key to retrieve your device list and local keys. The API key is discarded immediately after setup.",
+        "data": {
+          "api_key": "API Key"
+        }
+      },
+      "select_cloud_device": {
+        "title": "Select Device",
+        "description": "Select your device and specify its local network IP address.",
+        "data": {
+          "device_id": "Device",
+          "host": "Local IP Address"
+        }
+      },
+      "manual": {
+        "title": "Manual Offline Setup",
+        "description": "Configure directly using your device's local IP and private Device Password (mqttPassword).",
+        "data": {
+          "name": "Device Name",
+          "host": "Local IP Address",
+          "mqtt_pass": "Device Key (mqttPassword)",
+          "relay_count": "Number of Relays"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Tinxy cloud.",
+      "cannot_connect_local": "Could not connect to device on local network. Ensure IP is correct and local API is enabled.",
+      "no_devices": "No devices found on this account."
+    },
+    "abort": {
+      "already_configured": "This device is already configured in Home Assistant."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tinxy Local Settings",
+        "description": "Configure device IP, credentials, and polling behavior.",
+        "data": {
+          "host": "Local IP Address",
+          "mqtt_pass": "Device Key (mqttPassword)",
+          "request_timeout": "Request Timeout (seconds)",
+          "polling_interval": "Polling Interval (seconds)"
+        }
+      }
+    }
+  }
+}
