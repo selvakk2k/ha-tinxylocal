@@ -78,6 +78,10 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 
 ## Important Notes & Hardware Limits
 
+* **Cloud Commissioning & App Retention**:
+  * **Initial Setup**: Tinxy devices must initially be set up in the official Tinxy mobile app to join your 2.4 GHz Wi-Fi network and generate their communication key.
+  * **Keep Devices in the App**: Do **not** delete the device from your Tinxy mobile app after adding it to Home Assistant. Deleting a device from the cloud account triggers a factory password reset on the device, breaking local authentication.
+  * **Optional Internet Isolation**: Once paired with Home Assistant, you can safely block the device's IP address from accessing the internet in your Wi-Fi router or firewall settings. Because this integration operates 100% locally over LAN, the device will continue functioning offline, preventing accidental cloud resets or remote updates.
 * **Microcontroller Capacity**: Tinxy devices run on lightweight ESP microcontrollers that handle one connection at a time. The integration uses a queue to send commands safely one after another.
 * **Local Polling**: Home Assistant checks device status over your home Wi-Fi every 15 seconds (configurable). Dashboard toggles update immediately, while flips of the physical wall switch update on the next poll cycle.
 * **EVA Bulbs Unsupported**: Tinxy EVA smart bulbs use a proprietary RF mesh back to an EVA bridge and do not have an IP address on your Wi-Fi network.
@@ -134,6 +138,10 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 ---
 
 ## Setup & Configuration
+
+> [!IMPORTANT]
+> **Do Not Remove Devices from the Mobile App**:
+> Tinxy hardware requires initial pairing via the official Tinxy app to connect to Wi-Fi and create device credentials. Keep the device registered in your app; deleting it resets the hardware's internal encryption key. If you want pure local isolation with zero cloud contact, block the device's internet access at your Wi-Fi router instead.
 
 ### Automatic Discovery (Zeroconf / mDNS)
 Tinxy devices on your Wi-Fi network are automatically discovered by Home Assistant. When a discovery notification appears:
