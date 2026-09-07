@@ -9,14 +9,14 @@
     "network"
   ],
   "documentation": "https://github.com/selvakk2k/ha-tinxylocal/blob/main/README.md",
-  "issue_tracker": "https://github.com/selvakk2k/ha-tinxylocal/issues",
+  "integration_type": "hub",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/selvakk2k/ha-tinxylocal/issues",
+  "version": "3.0.0-beta.2",
   "zeroconf": [
     {
       "name": "tinxy*",
       "type": "_http._tcp.local."
     }
-  ],
-  "version": "3.0.0-beta.2",
-  "integration_type": "hub"
+  ]
 }
