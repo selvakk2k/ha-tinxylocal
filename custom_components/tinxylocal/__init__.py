@@ -99,6 +99,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Clean up empty orphaned devices after entities are attached to active device
+    _async_clean_orphaned_devices(hass, entry, device_id)
+
     # Listen for options updates (polling/timeout changes)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
@@ -211,6 +214,26 @@ async def _async_reconcile_entity_registry(
                 ent_reg.async_remove(ent.entity_id)
 
     # 4. Clean up any empty orphaned devices from previous pairings
+    for device in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
+        device_entries = er.async_entries_for_device(ent_reg, device.id)
+        if not device_entries and (DOMAIN, current_node_id) not in device.identifiers:
+            _LOGGER.info("Removing orphaned device '%s' (ID: %s)", device.name, device.id)
+            dev_reg.async_remove_device(device.id)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Remove a config entry from a device."""
+    _LOGGER.info("Removing device %s from config entry %s", device_entry.id, config_entry.entry_id)
+    return True
+
+
+def _async_clean_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry, current_node_id: str) -> None:
+    """Remove empty orphaned devices left over from previous pairings."""
+    ent_reg = er.async_get(hass)
+    dev_reg = dr.async_get(hass)
+
     for device in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
         device_entries = er.async_entries_for_device(ent_reg, device.id)
         if not device_entries and (DOMAIN, current_node_id) not in device.identifiers:
