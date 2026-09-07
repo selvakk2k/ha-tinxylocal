@@ -3,7 +3,7 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![Version](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal)](https://github.com/selvakk2k/ha-tinxylocal/releases)
 [![AI-Assisted](https://img.shields.io/badge/AI%20Assisted-Antigravity%20%7C%20Claude-blueviolet?style=flat-square&logo=google)](https://github.com/selvakk2k)
-[![AI Attribution](https://img.shields.io/badge/AI%20Attribution-AIA%20PAI%20Nc%20Hin-orange?style=flat-square)](https://aiattribution.github.io/)
+[![AI Attribution](https://img.shields.io/badge/AI%20Attribution-AIA%20PAI%20Nc%20Hin-orange?style=flat-square)](https://aiattribution.github.io/interpret-attribution)
 
 A modern, fast, pure-Python Home Assistant custom integration for **100% local LAN control** of **Tinxy Smart Devices** (smart switches, fan controllers, and pulse door locks).
 
