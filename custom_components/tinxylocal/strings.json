@@ -30,7 +30,8 @@
           "name": "Device Name",
           "host": "Local IP Address",
           "mqtt_pass": "Device Key (mqttPassword)",
-          "relay_count": "Number of Relays"
+          "relay_count": "Number of Relays (for switches)",
+          "device_type": "Device Type"
         }
       }
     },

@@ -10,7 +10,7 @@ A modern, fast, pure-Python Home Assistant custom integration for **100% local L
 This repository is a modern, pure-Python reimplementation of `arevindh/tinxylocal`, designed to eliminate bundled Go CLI binaries, resolve Home Assistant 2026+ deprecations, and introduce a concurrency-safe sequential command queue.
 
 > [!IMPORTANT]
-> This integration is designed for Tinxy devices with **local HTTP control enabled**. It is **not compatible** with Tinxy EVA smart bulbs, which use a cloud/BLE-only protocol and do not run a local HTTP server on port 80.
+> This integration is designed for Tinxy devices with **local HTTP control enabled**. It is **not compatible** with Tinxy EVA smart bulbs, which communicate over a proprietary sub-GHz RF mesh back to an EVA hub/node and do not receive a local LAN IP address or run an HTTP server on port 80.
 
 ---
 
@@ -58,7 +58,7 @@ This integration has been tested on the following hardware models:
 
 * **Single-Threaded ESP Web Server**: Tinxy devices run on low-power ESP microcontrollers whose local HTTP server cannot handle simultaneous TCP connections. All outgoing control commands are managed through an internal sequential queue (~0.25s spacing) to prevent socket lockups.
 * **Local Polling vs. Cloud Push**: Device status is polled over LAN via `GET /info` at your configured interval (default 15 seconds). Dashboard interactions update optimistically in 0ms, but physical wall-switch changes will reflect in Home Assistant on the next poll cycle.
-* **EVA Bulbs Unsupported**: Tinxy EVA smart bulbs do not support local HTTP on port 80 and require the cloud-based integration.
+* **EVA Bulbs Unsupported**: Tinxy EVA smart bulbs communicate over a proprietary sub-GHz RF mesh back to an EVA hub or bridge node; they do not have a LAN IP address or a local HTTP server.
 
 ---
 
@@ -124,10 +124,13 @@ All your existing devices will automatically load using the new pure-Python engi
 ### Option B: Manual Local Setup (100% Air-Gapped)
 1. Select **Manual Local**.
 2. Enter:
-   * **Device Name** (e.g. "Living Room Switch")
+   * **Device Name** (e.g. "Living Room Switch", "Bedroom Fan", or "Main Door")
    * **Local IP Address** (`192.168.0.x`)
    * **Device Key** (`mqttPassword`)
-   * **Number of Relays** (e.g. 1, 2, 4, 6)
+   * **Device Type**:
+     * **Smart Switch (Relays)**: Select channel count (1, 2, 4, 6, or 8 nodes).
+     * **Fan Controller**: Automatically configures 3-speed percentage fan control (33%, 66%, 100%).
+     * **Pulse Door Lock**: Automatically configures door lock pulse-relay control.
 3. Connects directly to `http://<ip>/info` over your LAN. Zero cloud calls made.
 
 ### Options & Per-Device Tuning

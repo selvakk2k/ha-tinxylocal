@@ -200,8 +200,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             host_ip = user_input[CONF_HOST].strip()
             mqtt_pass = user_input[CONF_MQTT_PASS].strip()
-            relay_count = int(user_input[CONF_RELAY_COUNT])
-            name = user_input.get("name", "Tinxy Switch")
+            dev_type = user_input.get("device_type", "switch")
+            relay_count = int(user_input.get(CONF_RELAY_COUNT, 1))
+            name = user_input.get("name", "Tinxy Device").strip()
 
             session = async_get_clientsession(self.hass)
             hub = TinxyLocalHub(self.hass, host_ip)
@@ -210,22 +211,39 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if status != "ok":
                 errors["base"] = "cannot_connect_local"
             else:
-                # Synthesize device topology for offline local mode
                 device_id = f"tinxy_{host_ip.replace('.', '_')}"
                 await self.async_set_unique_id(device_id)
                 self._abort_if_unique_id_configured()
 
-                relays = [f"Switch {i+1}" for i in range(relay_count)]
-                types = ["Switch"] * relay_count
-
-                synthetic_device = {
-                    "_id": device_id,
-                    "name": name,
-                    "mqttPassword": mqtt_pass,
-                    "devices": relays,
-                    "deviceTypes": types,
-                    "typeId": {"name": f"Tinxy {relay_count}-Node Switch"},
-                }
+                if dev_type == "fan":
+                    synthetic_device = {
+                        "_id": device_id,
+                        "name": name,
+                        "mqttPassword": mqtt_pass,
+                        "devices": [name],
+                        "deviceTypes": ["Fan"],
+                        "typeId": {"name": "Tinxy Fan Controller"},
+                    }
+                elif dev_type == "lock":
+                    synthetic_device = {
+                        "_id": device_id,
+                        "name": name,
+                        "mqttPassword": mqtt_pass,
+                        "devices": [name],
+                        "deviceTypes": ["Lock"],
+                        "typeId": {"name": "Tinxy Door Lock", "gtype": "action.devices.types.LOCK"},
+                    }
+                else:
+                    relays = [f"Switch {i+1}" for i in range(relay_count)]
+                    types = ["Switch"] * relay_count
+                    synthetic_device = {
+                        "_id": device_id,
+                        "name": name,
+                        "mqttPassword": mqtt_pass,
+                        "devices": relays,
+                        "deviceTypes": types,
+                        "typeId": {"name": f"Tinxy {relay_count}-Node Switch"},
+                    }
 
                 return self.async_create_entry(
                     title=name,
@@ -239,7 +257,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         schema = vol.Schema(
             {
-                vol.Required("name", default="Tinxy Switch"): selector.TextSelector(),
+                vol.Required("name", default="Tinxy Device"): selector.TextSelector(),
                 vol.Required(
                     CONF_HOST, default=self.discovered_ip or ""
                 ): selector.TextSelector(),
@@ -249,7 +267,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         autocomplete="off",
                     )
                 ),
-                vol.Required(CONF_RELAY_COUNT, default=2): selector.NumberSelector(
+                vol.Required(
+                    "device_type", default="switch"
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value="switch", label="Smart Switch (Relays)"),
+                            selector.SelectOptionDict(value="fan", label="Fan Controller (3-Speed)"),
+                            selector.SelectOptionDict(value="lock", label="Pulse Door Lock"),
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Optional(
+                    CONF_RELAY_COUNT, default=2
+                ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=1, max=8, mode=selector.NumberSelectorMode.BOX
                     )
