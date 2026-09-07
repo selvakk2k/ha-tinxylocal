@@ -92,7 +92,9 @@ Because this integration uses the exact same domain (`tinxylocal`), **all your e
 
 1. In Home Assistant, open **HACS** → **Integrations**.
 2. Find the old **Tinxy Local** integration card.
-3. Click the three dots (⋮) on the card and select **Remove** (do **not** delete the integration under *Settings → Devices & Services*; only remove the old repository from HACS).
+3. Click the three dots (⋮) on the card and select **Remove**.
+   > [!TIP]
+   > **Handling the HACS Warning Dialog**: When you click Remove, HACS will detect existing configured devices and display a dialog stating *"This integration is currently configured... navigate to the integration to remove it or ignore"*. **Click IGNORE**. Do **not** remove the integration under *Settings → Devices & Services*, otherwise your entity IDs, automations, and dashboard cards will be deleted. Clicking **Ignore** safely unlinks the old repository from HACS while preserving all your configured devices in Home Assistant.
 4. *(Recommended)* Open your Home Assistant terminal or Studio Code Server add-on, and delete the old binary build folder to free up ~36 MB of disk space:
    ```bash
    rm -rf /config/custom_components/tinxylocal/build
