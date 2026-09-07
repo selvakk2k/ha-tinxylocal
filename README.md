@@ -2,6 +2,8 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![Version](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal)](https://github.com/selvakk2k/ha-tinxylocal/releases)
+[![AI-Assisted](https://img.shields.io/badge/AI%20Assisted-Antigravity%20%7C%20Claude-blueviolet?style=flat-square&logo=google)](https://github.com/selvakk2k)
+[![AI Attribution](https://img.shields.io/badge/AI%20Attribution-AIA%20PAI%20Nc%20Hin-orange?style=flat-square)](https://aiattribution.github.io/)
 
 A modern, fast, pure-Python Home Assistant custom integration for **100% local LAN control** of **Tinxy Smart Devices** (smart switches, fan controllers, and pulse door locks).
 
@@ -160,9 +162,11 @@ logger:
 
 ### Upstream Authors & Contributors
 * Originally designed and written by [@arevindh](https://github.com/arevindh) and contributors in [`arevindh/tinxylocal`](https://github.com/arevindh/tinxylocal).
-* Special thanks to the earlier contributors for reverse-engineering the Tinxy local protocol.
+* Special thanks to earlier community contributors for reverse-engineering the Tinxy local protocol.
 
-### Fork / Project Contributors
-* Pure-Python XXTEA encryption, Tuya-Local setup architecture, concurrency queue, and Home Assistant 2026+ deprecation fixes developed by [@selvakk2k](https://github.com/selvakk2k) with assistance from **Claude** (Anthropic) and **Gemini/Antigravity** (Google DeepMind).
+### Project Contributors & AI Attribution
+* **Lead Architecture & Hardware Validation**: [@selvakk2k](https://github.com/selvakk2k) — physical testing on Tinxy hardware, design requirements, and integration architecture.
+* **Implementation & Engineering**: **Antigravity** (Google DeepMind) — pure-Python XXTEA cryptographic engine, asynchronous queue concurrency architecture, Home Assistant 2026+ lifecycle migrations, and automated test suites.
+* **Pre-Release Code Review & Auditing**: **Claude** (Anthropic) — independent architectural review, edge-case analysis, and verification of upstream compatibility.
 
 Licensed under the **GNU Affero General Public License v3.0**. See the [LICENSE](LICENSE) file for the full license text.
