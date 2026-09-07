@@ -29,6 +29,7 @@ class TinxyUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         polling_interval: int = DEFAULT_POLLING_INTERVAL,
         request_timeout: int = DEFAULT_REQUEST_TIMEOUT,
         config_entry: ConfigEntry | None = None,
+        hubs: list[TinxyLocalHub] | None = None,
     ) -> None:
         """Initialize the coordinator."""
         super().__init__(
@@ -43,11 +44,14 @@ class TinxyUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.web_session = web_session
         self.request_timeout = request_timeout
 
-        # Instantiate hubs with the actual configured request_timeout
-        self.hubs = [
-            TinxyLocalHub(hass, node["ip_address"], request_timeout)
-            for node in nodes
-        ]
+        # Use shared hub instances if provided, or instantiate fallback hubs
+        if hubs is not None:
+            self.hubs = hubs
+        else:
+            self.hubs = [
+                TinxyLocalHub(hass, node["ip_address"], request_timeout)
+                for node in nodes
+            ]
         self.device_metadata: dict[str, dict[str, Any]] = {}
 
     async def _async_update_data(self) -> dict[str, Any]:

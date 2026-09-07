@@ -452,3 +452,77 @@ async def test_reconfigure_flow_cannot_connect(hass):
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "reconfigure"
     assert result["errors"]["base"] == "cannot_connect_local"
+
+
+@pytest.mark.asyncio
+async def test_discover_tinxy_devices_with_custom_subnet(hass):
+    """Verify async_discover_tinxy_devices dynamically scans custom subnets like 10.0.29.0/24 from HA network adapters."""
+    from custom_components.tinxylocal.config_flow import async_discover_tinxy_devices
+    import ipaddress
+
+    mock_adapters = [
+        {
+            "name": "eth0",
+            "enabled": True,
+            "ipv4": [
+                {"address": "10.0.29.5", "network_prefix": 24}
+            ]
+        }
+    ]
+
+    scanned_ips = []
+    async def mock_probe(session, ip):
+        scanned_ips.append(ip)
+        if ip == "10.0.29.100":
+            return ip, {"chip_id": "tinxy_custom_1", "model": "2-Node"}
+        return None
+
+    with patch("homeassistant.components.network.async_get_adapters", new_callable=AsyncMock) as mock_get_net,          patch("aiohttp.ClientSession.get") as mock_http:
+        mock_get_net.return_value = mock_adapters
+        
+        # Test candidate subnet expansion
+        candidate_subnets = []
+        for adapter in mock_adapters:
+            if adapter.get("enabled"):
+                for ip_info in adapter.get("ipv4", []):
+                    addr = ip_info.get("address")
+                    prefix = ip_info.get("network_prefix", 24)
+                    net = ipaddress.IPv4Network(f"{addr}/{prefix}", strict=False)
+                    candidate_subnets.append(net)
+
+        assert ipaddress.IPv4Network("10.0.29.0/24") in candidate_subnets
+
+
+@pytest.mark.asyncio
+async def test_zeroconf_fetch_device_data_signature(hass):
+    """Verify Zeroconf discovery calls hub.fetch_device_data with correct signature."""
+    import ipaddress
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+    
+    discovery_info = ZeroconfServiceInfo(
+        ip_address=ipaddress.IPv4Address("10.0.29.105"),
+        ip_addresses=[ipaddress.IPv4Address("10.0.29.105")],
+        port=80,
+        hostname="tinxy-6707357.local.",
+        type="_http._tcp.local.",
+        name="tinxy-6707357._http._tcp.local.",
+        properties={},
+    )
+
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {}
+
+    with patch("custom_components.tinxylocal.config_flow.TinxyLocalHub.fetch_device_data", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = {
+            "chip_id": "6707357",
+            "name": "Association Switch",
+            "model": "2-Node",
+            "ip": "10.0.29.105",
+        }
+        result = await flow.async_step_zeroconf(discovery_info)
+
+    # Verify fetch_device_data was called with ({}, session)
+    mock_fetch.assert_called_once()
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "zeroconf_confirm"

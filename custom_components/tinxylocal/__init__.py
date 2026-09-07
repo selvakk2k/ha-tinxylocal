@@ -82,7 +82,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hubs = [TinxyLocalHub(hass, node["ip_address"], request_timeout) for node in nodes]
     coordinator = TinxyUpdateCoordinator(
-        hass, nodes, web_session, polling_interval, request_timeout, config_entry=entry
+        hass, nodes, web_session, polling_interval, request_timeout, config_entry=entry, hubs=hubs
     )
 
     hass.data[DOMAIN][entry.entry_id] = {
@@ -93,9 +93,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Initial data load
     await coordinator.async_config_entry_first_refresh()
-
-    # Reconcile entity registry before adding entities
-    await _async_reconcile_entity_registry(hass, entry, device_id, device_data.get("typeId", {}).get("features", []))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -130,20 +127,27 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry to current schema version."""
     _LOGGER.info(
-        "Migrating Tinxy Local entry '%s' from version %s to version 2",
+        "Migrating Tinxy Local entry '%s' from version %s to version 3",
         config_entry.title,
         config_entry.version,
     )
 
+    new_data = {**config_entry.data}
+
     if config_entry.version == 1:
         # Strip legacy plaintext API key if present to enforce ephemeral local privacy
-        new_data = {**config_entry.data}
         if "api_key" in new_data:
             new_data.pop("api_key")
             _LOGGER.info("Stripped legacy plaintext api_key from entry '%s' for local privacy", config_entry.title)
 
-        hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
-        _LOGGER.info("Migration of Tinxy Local entry '%s' to version 2 successful", config_entry.title)
+    if config_entry.version < 3:
+        # Reconcile entity registry and legacy unique_ids once during upgrade
+        device_data = new_data.get(CONF_DEVICE, {})
+        device_id = new_data.get("device_id", device_data.get("_id", "unknown"))
+        features = device_data.get("typeId", {}).get("features", [])
+        await _async_reconcile_entity_registry(hass, config_entry, device_id, features)
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=3)
+        _LOGGER.info("Migration of Tinxy Local entry '%s' to version 3 successful", config_entry.title)
 
     return True
 

@@ -8,7 +8,6 @@ import logging
 import socket
 from typing import Any
 import aiohttp
-import psutil
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -60,15 +59,22 @@ async def async_discover_tinxy_devices(
         if net not in candidate_subnets:
             candidate_subnets.append(net)
 
-    try:
-        for _iface, addrs in psutil.net_if_addrs().items():
-            for addr in addrs:
-                if getattr(addr, "family", None) in (2, socket.AF_INET) and not addr.address.startswith("127."):
-                    net = ipaddress.IPv4Network(f"{addr.address}/24", strict=False)
-                    if net not in candidate_subnets:
-                        candidate_subnets.append(net)
-    except Exception as if_err:
-        _LOGGER.debug("Could not inspect network interfaces: %s", if_err)
+    if hass is not None:
+        try:
+            from homeassistant.components.network import async_get_adapters
+            adapters = await async_get_adapters(hass)
+            for adapter in adapters:
+                if adapter.get("enabled"):
+                    for ip_info in adapter.get("ipv4", []):
+                        addr = ip_info.get("address")
+                        prefix = ip_info.get("network_prefix", 24)
+                        if addr and not addr.startswith("127."):
+                            scan_prefix = max(prefix, 24)
+                            net = ipaddress.IPv4Network(f"{addr}/{scan_prefix}", strict=False)
+                            if net not in candidate_subnets:
+                                candidate_subnets.append(net)
+        except Exception as net_err:
+            _LOGGER.debug("Could not inspect network adapters via HA network component: %s", net_err)
 
     try:
         with open("/proc/net/route", encoding="utf-8") as f:
@@ -117,7 +123,7 @@ async def async_discover_tinxy_devices(
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle config flow for Tinxy Local."""
 
-    VERSION = 2
+    VERSION = 3
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -142,7 +148,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         session = async_get_clientsession(self.hass)
         hub = TinxyLocalHub(self.hass, host)
         try:
-            info = await hub.fetch_device_data(session)
+            info = await hub.fetch_device_data({}, session)
         except Exception:
             info = None
 

@@ -67,6 +67,7 @@ class TinxyLocalHub:
         self.last_command_time = 0.0
         self.last_command_timestamp = 0
         self._shutdown = False
+        self._request_lock = asyncio.Lock()
 
     async def validate_ip(
         self, web_session: aiohttp.ClientSession, chip_id: str | None = None
@@ -85,9 +86,13 @@ class TinxyLocalHub:
             return "connection_error"
 
     async def fetch_device_data(
-        self, node: dict[str, Any], web_session: aiohttp.ClientSession
+        self,
+        node: dict[str, Any] | None = None,
+        web_session: aiohttp.ClientSession | None = None,
     ) -> dict[str, Any] | None:
         """Fetch status directly from device GET /info."""
+        if node is None:
+            node = {}
         try:
             data = await self._send_request("GET", "/info", web_session=web_session)
             if not data or not isinstance(data, dict):
@@ -280,29 +285,36 @@ class TinxyLocalHub:
             raise TinxyConnectionException("No web_session provided")
 
         url = f"{self.host}{endpoint}"
-        try:
-            async with web_session.request(
-                method,
-                url=url,
-                json=payload if method == "POST" else None,
-                headers=HEADERS,
-                timeout=aiohttp.ClientTimeout(total=self.request_timeout),
-            ) as response:
-                if response.status == 200:
-                    return await response.json(content_type=None)
-                if response.status == 400:
+        async with self._request_lock:
+            # Small spacing to protect single-threaded ESP network stack
+            time_since_last = time.time() - self.last_command_time
+            if time_since_last < 0.05:
+                await asyncio.sleep(0.05 - time_since_last)
+
+            try:
+                async with web_session.request(
+                    method,
+                    url=url,
+                    json=payload if method == "POST" else None,
+                    headers=HEADERS,
+                    timeout=aiohttp.ClientTimeout(total=self.request_timeout),
+                ) as response:
+                    self.last_command_time = time.time()
+                    if response.status == 200:
+                        return await response.json(content_type=None)
+                    if response.status == 400:
+                        raise TinxyConnectionException(
+                            f"Request rejected (HTTP 400) by {url}: Device rejected command. "
+                            "Verify that the Device Key (MQTT password) is correct in integration options "
+                            "and that the device clock/timestamp is synchronized."
+                        )
                     raise TinxyConnectionException(
-                        f"Request rejected (HTTP 400) by {url}: Device rejected command. "
-                        "Verify that the Device Key (MQTT password) is correct in integration options "
-                        "and that the device clock/timestamp is synchronized."
+                        f"Request failed with status {response.status}"
                     )
-                raise TinxyConnectionException(
-                    f"Request failed with status {response.status}"
-                )
-        except (TimeoutError, asyncio.TimeoutError) as err:
-            raise TinxyConnectionException(f"Request to {url} timed out") from err
-        except aiohttp.ClientError as err:
-            raise TinxyConnectionException(f"Client error for {url}: {err}") from err
+            except (TimeoutError, asyncio.TimeoutError) as err:
+                raise TinxyConnectionException(f"Request to {url} timed out") from err
+            except aiohttp.ClientError as err:
+                raise TinxyConnectionException(f"Client error for {url}: {err}") from err
 
     async def shutdown(self) -> None:
         """Cancel worker tasks on unload."""

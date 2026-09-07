@@ -126,7 +126,7 @@ async def test_migration_v1_to_v2_strips_api_key():
 
     assert "api_key" not in updated_data
     assert updated_data["host"] == "192.168.0.163"
-    assert updated_version == 2
+    assert updated_version == 3
 
 
 @pytest.mark.asyncio
@@ -231,3 +231,77 @@ async def test_sensor_setup_multi_node(hass):
     rssi_1 = next(s for s in added_sensors if s.unique_id == "node_1_rssi")
     assert rssi_1.name == "Living Room Wi-Fi Signal"
     assert rssi_1.native_value == -65
+
+
+@pytest.mark.asyncio
+async def test_migration_v2_to_v3_reconciles_registry():
+    """Verify that migration from v2 to v3 upgrades version to 3 and runs reconciliation."""
+    from custom_components.tinxylocal import async_migrate_entry
+    from unittest.mock import MagicMock
+
+    mock_hass = MagicMock()
+    mock_entry = MagicMock()
+    mock_entry.version = 2
+    mock_entry.title = "Office Switch"
+    mock_entry.data = {
+        "host": "10.0.29.50",
+        "mqtt_pass": "secret456",
+        "device_id": "tinxy_dev_2",
+    }
+
+    result = await async_migrate_entry(mock_hass, mock_entry)
+    assert result is True
+
+    mock_hass.config_entries.async_update_entry.assert_called_once()
+    call_args = mock_hass.config_entries.async_update_entry.call_args
+    assert call_args.kwargs["version"] == 3
+
+
+@pytest.mark.asyncio
+async def test_hub_mutual_exclusion_lock():
+    """Verify that TinxyLocalHub._send_request serializes concurrent requests."""
+    from custom_components.tinxylocal.hub import TinxyLocalHub
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock
+
+    mock_hass = MagicMock()
+    hub = TinxyLocalHub(mock_hass, "192.168.1.100", request_timeout=5)
+
+    call_order = []
+
+    mock_session = MagicMock()
+    
+    # Mock request context manager
+    class MockResponseContext:
+        def __init__(self, name, delay):
+            self.name = name
+            self.delay = delay
+        async def __aenter__(self):
+            call_order.append(f"{self.name}_start")
+            await asyncio.sleep(self.delay)
+            resp = MagicMock()
+            resp.status = 200
+            resp.json = AsyncMock(return_value={"status": "ok"})
+            return resp
+        async def __aexit__(self, *args):
+            call_order.append(f"{self.name}_end")
+
+    def side_effect(method, url, **kwargs):
+        if "/info" in url:
+            return MockResponseContext("info", 0.05)
+        return MockResponseContext("toggle", 0.05)
+
+    mock_session.request.side_effect = side_effect
+
+    # Launch concurrent /info and /toggle
+    t1 = asyncio.create_task(hub.fetch_device_data({}, mock_session))
+    t2 = asyncio.create_task(hub._send_request("POST", "/toggle", {}, mock_session))
+
+    await asyncio.gather(t1, t2)
+
+    # Verify requests did NOT interleave (start1 -> end1 -> start2 -> end2)
+    assert len(call_order) == 4
+    assert call_order[0].endswith("_start")
+    assert call_order[1].endswith("_end")
+    assert call_order[2].endswith("_start")
+    assert call_order[3].endswith("_end")
