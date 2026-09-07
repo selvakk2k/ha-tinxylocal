@@ -5,7 +5,6 @@
     "@selvakk2k"
   ],
   "config_flow": true,
-  "description": "Fast, 100% local LAN integration for Tinxy Smart Devices.",
   "dependencies": [
     "network"
   ],
@@ -19,5 +18,5 @@
     }
   ],
   "version": "3.0.0-beta.2",
-  "homeassistant": ">=2024.12.0"
+  "integration_type": "hub"
 }
