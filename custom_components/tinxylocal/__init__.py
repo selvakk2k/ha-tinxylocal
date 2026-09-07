@@ -135,7 +135,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     new_data = {**config_entry.data}
 
     if config_entry.version == 1:
-        # Strip legacy plaintext API key if present to enforce ephemeral local privacy
+        # Remove old stored API token so all control remains 100% local
         if "api_key" in new_data:
             new_data.pop("api_key")
             _LOGGER.info("Stripped legacy plaintext api_key from entry '%s' for local privacy", config_entry.title)

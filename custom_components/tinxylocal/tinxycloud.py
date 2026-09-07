@@ -1,4 +1,4 @@
-"""Minimal client for ephemeral cloud-assisted device onboarding."""
+"""Client for cloud-assisted device setup."""
 
 from __future__ import annotations
 
