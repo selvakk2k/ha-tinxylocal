@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
+import ipaddress
 import logging
+import socket
 from typing import Any
 
+import aiohttp
+import psutil
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -22,18 +27,104 @@ from .const import (
     CONF_POLLING_INTERVAL,
     CONF_RELAY_COUNT,
     CONF_REQUEST_TIMEOUT,
-    CONF_SETUP_MODE,
     DEFAULT_POLLING_INTERVAL,
     DEFAULT_REQUEST_TIMEOUT,
     DOMAIN,
-    SETUP_MODE_CLOUD,
-    SETUP_MODE_MANUAL,
     TINXY_BACKEND,
 )
 from .hub import TinxyLocalHub
 from .tinxycloud import TinxyAuthenticationException, TinxyCloud, TinxyHostConfiguration
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def async_discover_tinxy_devices(
+    hass: HomeAssistant,
+    target_chip_ids: set[str] | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Scan RFC 1918 private IP ranges and active local subnets for Tinxy devices.
+
+    Covers:
+      - Class C: 192.168.0.0/24, 192.168.1.0/24, 192.168.29.0/24 (JioFiber), 192.168.2.0/24, 192.168.31.0/24 (Mi)
+      - Class A: 10.0.0.0/24, 10.0.1.0/24
+      - Class B: 172.16.0.0/24, 172.16.1.0/24
+      - System interfaces: Any actively configured IPv4 subnet on the host/container (psutil)
+    Exits early as soon as all target_chip_ids are located.
+    """
+    discovered: dict[str, dict[str, Any]] = {}
+    candidate_subnets: list[ipaddress.IPv4Network] = []
+
+    # 1. Common home IoT and router defaults
+    standard_subnets = [
+        "192.168.0.0/24",
+        "192.168.1.0/24",
+        "192.168.29.0/24",
+        "10.0.0.0/24",
+        "10.0.1.0/24",
+        "172.16.0.0/24",
+        "192.168.2.0/24",
+        "192.168.31.0/24",
+    ]
+    for s_net in standard_subnets:
+        net = ipaddress.IPv4Network(s_net)
+        if net not in candidate_subnets:
+            candidate_subnets.append(net)
+
+    # 2. Add any active network interfaces detected on the host/container
+    try:
+        for _iface, addrs in psutil.net_if_addrs().items():
+            for addr in addrs:
+                if getattr(addr, "family", None) in (2, socket.AF_INET) and not addr.address.startswith("127."):
+                    net = ipaddress.IPv4Network(f"{addr.address}/24", strict=False)
+                    if net not in candidate_subnets:
+                        candidate_subnets.append(net)
+    except Exception as if_err:
+        _LOGGER.debug("Could not inspect network interfaces: %s", if_err)
+
+    # 3. Add default gateway subnet if present in /proc/net/route
+    try:
+        with open("/proc/net/route", encoding="utf-8") as f:
+            for line in f.readlines()[1:]:
+                fields = line.strip().split()
+                if fields[1] == "00000000":
+                    gw = socket.inet_ntoa(bytes.fromhex(fields[2])[::-1])
+                    net = ipaddress.IPv4Network(f"{gw}/24", strict=False)
+                    if net not in candidate_subnets:
+                        candidate_subnets.append(net)
+    except Exception:
+        pass
+
+    async def _probe_ip(session: aiohttp.ClientSession, ip: str) -> tuple[str, dict[str, Any]] | None:
+        url = f"http://{ip}/info"
+        try:
+            async with session.get(
+                url, timeout=aiohttp.ClientTimeout(total=0.9, connect=0.5)
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json(content_type=None)
+                    if isinstance(data, dict) and "chip_id" in data:
+                        cid = str(data["chip_id"]).strip()
+                        return cid, {"ip": ip, "info": data}
+        except Exception:
+            pass
+        return None
+
+    conn = aiohttp.TCPConnector(limit=300, force_close=True)
+    async with aiohttp.ClientSession(connector=conn) as session:
+        for net in candidate_subnets:
+            tasks = [_probe_ip(session, str(host_ip)) for host_ip in net.hosts()]
+            results = await asyncio.gather(*tasks)
+            for res in results:
+                if res:
+                    cid, val = res
+                    discovered[cid] = val
+
+            # Early exit if all target cloud devices have been located on the LAN
+            if target_chip_ids and target_chip_ids.issubset(discovered.keys()):
+                _LOGGER.debug("Located all %d target device(s) on subnet %s, ending scan early", len(target_chip_ids), net)
+                break
+
+    return discovered
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -45,6 +136,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize the config flow."""
         self.discovered_ip: str | None = None
         self.discovered_chip_id: str | None = None
+        self.discovered_devices: dict[str, dict[str, Any]] = {}
         self.cloud_devices: list[dict[str, Any]] = []
 
     @staticmethod
@@ -58,43 +150,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Step 1: Choose between Cloud-Assisted setup and Manual Offline setup."""
-        if user_input is not None:
-            if user_input[CONF_SETUP_MODE] == SETUP_MODE_CLOUD:
-                return await self.async_step_cloud()
-            return await self.async_step_manual()
-
-        schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_SETUP_MODE, default=SETUP_MODE_CLOUD
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            selector.SelectOptionDict(
-                                value=SETUP_MODE_CLOUD,
-                                label="Cloud-Assisted (Fetch local keys via API key, then discard key)",
-                            ),
-                            selector.SelectOptionDict(
-                                value=SETUP_MODE_MANUAL,
-                                label="Manual Local (100% Offline with IP and Device Password)",
-                            ),
-                        ],
-                        mode=selector.SelectSelectorMode.LIST,
-                    )
-                ),
-            }
+        return self.async_show_menu(
+            step_id="user",
+            menu_options=["cloud", "manual"],
         )
-
-        return self.async_show_form(step_id="user", data_schema=schema)
 
     async def async_step_cloud(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Step 2a: Cloud-Assisted setup to query device list and keys."""
+        """Step 2a: Cloud-Assisted setup to query device list and local keys."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            api_token = user_input[CONF_API_KEY]
+            api_token = user_input[CONF_API_KEY].strip()
             session = async_get_clientsession(self.hass)
 
             try:
@@ -108,8 +176,26 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     errors["base"] = "no_devices"
                 else:
                     self.cloud_devices = dev_list
-                    # Crucial: API key is kept in memory during flow only and discarded upon save
+
+                    # Extract target chip IDs from cloud payload to prioritize scan
+                    target_chip_ids = set()
+                    for d in dev_list:
+                        cid = d.get("uuidRef", {}).get("uuid") or d.get("chip_id")
+                        if cid:
+                            target_chip_ids.add(str(cid).strip())
+
+                    # Auto-discover local device IP addresses across RFC 1918 ranges
+                    try:
+                        self.discovered_devices = await async_discover_tinxy_devices(
+                            self.hass, target_chip_ids=target_chip_ids
+                        )
+                    except Exception as disc_err:
+                        _LOGGER.debug("Local discovery probe failed: %s", disc_err)
+                        self.discovered_devices = {}
+
                     return await self.async_step_select_cloud_device()
+            except TinxyAuthenticationException:
+                errors["base"] = "invalid_auth"
             except Exception as err:
                 _LOGGER.error("Failed connecting to Tinxy cloud: %s", err)
                 errors["base"] = "cannot_connect"
@@ -130,25 +216,57 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_select_cloud_device(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Select a cloud device and assign its local IP."""
+        """Select a cloud device and confirm its local IP address."""
         errors: dict[str, str] = {}
 
-        device_options = {
-            d["_id"]: f"{d.get('name', 'Device')} ({d.get('typeId', {}).get('name', 'Switch')})"
-            for d in self.cloud_devices
-            if "_id" in d
+        # Exclude devices already configured in Home Assistant
+        configured_ids = {
+            entry.unique_id for entry in self._async_current_entries()
         }
+        available_devices = [
+            d for d in self.cloud_devices if d.get("_id") not in configured_ids
+        ]
+
+        if not available_devices:
+            return self.async_abort(reason="already_configured")
+
+        device_options: dict[str, str] = {}
+        first_detected_ip: str | None = self.discovered_ip
+
+        for d in available_devices:
+            d_id = d["_id"]
+            cid = str(d.get("uuidRef", {}).get("uuid") or d.get("chip_id") or "").strip()
+            dev_name = d.get("name", "Tinxy Device")
+            type_name = d.get("typeId", {}).get("name", "Switch")
+
+            matched_ip = None
+            if cid and cid in self.discovered_devices:
+                matched_ip = self.discovered_devices[cid]["ip"]
+                d["discovered_ip"] = matched_ip
+                if not first_detected_ip:
+                    first_detected_ip = matched_ip
+
+            if matched_ip:
+                device_options[d_id] = f"{dev_name} ({type_name}) — {matched_ip} (Discovered)"
+            else:
+                device_options[d_id] = f"{dev_name} ({type_name})"
+
+        if not self.discovered_ip and first_detected_ip:
+            self.discovered_ip = first_detected_ip
 
         if user_input is not None:
             target_id = user_input[CONF_DEVICE_ID]
-            host_ip = user_input[CONF_HOST].strip()
+            host_ip = user_input.get(CONF_HOST, "").strip()
 
             selected_device = next(
-                (d for d in self.cloud_devices if d["_id"] == target_id), None
+                (d for d in available_devices if d["_id"] == target_id), None
             )
 
-            if selected_device:
-                # Validate local connectivity to /info
+            # Auto-fallback to discovered IP if field was left blank
+            if not host_ip and selected_device and selected_device.get("discovered_ip"):
+                host_ip = selected_device["discovered_ip"]
+
+            if selected_device and host_ip:
                 session = async_get_clientsession(self.hass)
                 hub = TinxyLocalHub(self.hass, host_ip)
                 status = await hub.validate_ip(session)
@@ -159,7 +277,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     await self.async_set_unique_id(selected_device["_id"])
                     self._abort_if_unique_id_configured()
 
-                    # Save config entry WITHOUT the cloud API token (ephemeral key discarded immediately)
                     return self.async_create_entry(
                         title=selected_device.get("name", "Tinxy Switch"),
                         data={
@@ -169,10 +286,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             CONF_DEVICE: selected_device,
                         },
                     )
+            elif not host_ip:
+                errors["base"] = "cannot_connect_local"
 
+        first_device_id = available_devices[0]["_id"] if available_devices else None
         schema = vol.Schema(
             {
-                vol.Required(CONF_DEVICE_ID): selector.SelectSelector(
+                vol.Required(CONF_DEVICE_ID, default=first_device_id): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=[
                             selector.SelectOptionDict(value=k, label=v)
@@ -197,7 +317,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Step 2b: Manual 100% offline setup using IP and device key."""
         errors: dict[str, str] = {}
 
-        if user_input is not None:
+        if user_input is None:
+            # Pre-fill discovered IP in manual flow if available
+            if not self.discovered_ip:
+                try:
+                    disc = await async_discover_tinxy_devices(self.hass)
+                    if disc:
+                        self.discovered_ip = next(iter(disc.values()))["ip"]
+                except Exception:
+                    pass
+        else:
             host_ip = user_input[CONF_HOST].strip()
             mqtt_pass = user_input[CONF_MQTT_PASS].strip()
             dev_type = user_input.get("device_type", "switch")
@@ -325,11 +454,9 @@ class TinxyLocalOptionsFlowHandler(config_entries.OptionsFlow):
             updated_data = {**self.config_entry.data}
             updated_options = {**self.config_entry.options}
 
-            # Update host IP if modified
             if user_input.get(CONF_HOST):
                 updated_data[CONF_HOST] = user_input[CONF_HOST]
 
-            # Update device key if modified
             if user_input.get(CONF_MQTT_PASS):
                 updated_data[CONF_MQTT_PASS] = user_input[CONF_MQTT_PASS]
 
