@@ -37,20 +37,55 @@
       },
       "manual": {
         "title": "Manual Offline Setup",
-        "description": "Configure your Tinxy device directly using its local network IP address and private device key.",
+        "description": "Select the device type to configure manually using its local IP address and private encryption key.",
+        "menu_options": {
+          "manual_switch": "Smart Switch (1 to 8 Relays)",
+          "manual_fan": "Fan Controller (3-Speed)",
+          "manual_lock": "Pulse Door Lock"
+        }
+      },
+      "manual_switch": {
+        "title": "Smart Switch Setup",
+        "description": "Configure your Tinxy multi-node smart switch using its local network IP address and private device key.",
         "data": {
           "name": "Device Name",
           "host": "Local IP Address",
           "mqtt_pass": "Device Key (mqttPassword)",
-          "device_type": "Device Type",
           "relay_count": "Number of Relays"
         },
         "data_description": {
-          "name": "Friendly name for this device (e.g., Living Room Switch).",
+          "name": "Friendly name for this switch (e.g., Living Room Switch).",
           "host": "Local static or DHCP reserved IP address on your Wi-Fi network.",
           "mqtt_pass": "The private encryption key assigned to the device (mqttPassword).",
-          "device_type": "Hardware form factor of the device.",
-          "relay_count": "Number of relay channels for smart switch modules (1 to 8)."
+          "relay_count": "Number of relay channels on this switch module (1 to 8)."
+        }
+      },
+      "manual_fan": {
+        "title": "Fan Controller Setup",
+        "description": "Configure your Tinxy fan controller using its local network IP address and private device key.",
+        "data": {
+          "name": "Device Name",
+          "host": "Local IP Address",
+          "mqtt_pass": "Device Key (mqttPassword)"
+        },
+        "data_description": {
+          "name": "Friendly name for this fan (e.g., Bedroom Ceiling Fan).",
+          "host": "Local static or DHCP reserved IP address on your Wi-Fi network.",
+          "mqtt_pass": "The private encryption key assigned to the device (mqttPassword)."
+        }
+      },
+      "manual_lock": {
+        "title": "Door Lock Setup",
+        "description": "Configure your Tinxy pulse-relay lock using its local network IP address and private device key.",
+        "data": {
+          "name": "Device Name",
+          "host": "Local IP Address",
+          "mqtt_pass": "Device Key (mqttPassword)"
+        },
+        "data_description": {
+          "name": "Friendly name for this lock (e.g., Front Gate Lock).",
+          "host": "Local static or DHCP reserved IP address on your Wi-Fi network.",
+          "mqtt_pass": "The private encryption key assigned to the device (mqttPassword)."
         }
       }
     },

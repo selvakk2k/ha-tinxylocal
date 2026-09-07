@@ -132,7 +132,7 @@ class TinxySwitch(CoordinatorEntity[TinxyUpdateCoordinator], SwitchEntity):
             _LOGGER.error("Failed turning on switch %s: %s", self._attr_name, err)
         finally:
             self._optimistic_state = None
-            self.coordinator.async_request_refresh()
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn switch off optimistically."""
@@ -154,4 +154,4 @@ class TinxySwitch(CoordinatorEntity[TinxyUpdateCoordinator], SwitchEntity):
             _LOGGER.error("Failed turning off switch %s: %s", self._attr_name, err)
         finally:
             self._optimistic_state = None
-            self.coordinator.async_request_refresh()
+            await self.coordinator.async_request_refresh()

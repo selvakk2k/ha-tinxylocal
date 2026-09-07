@@ -157,7 +157,7 @@ class TinxyFan(CoordinatorEntity[TinxyUpdateCoordinator], FanEntity):
             )
         finally:
             self._optimistic_is_on = None
-            self.coordinator.async_request_refresh()
+            await self.coordinator.async_request_refresh()
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
@@ -185,4 +185,4 @@ class TinxyFan(CoordinatorEntity[TinxyUpdateCoordinator], FanEntity):
         finally:
             self._optimistic_is_on = None
             self._optimistic_percentage = None
-            self.coordinator.async_request_refresh()
+            await self.coordinator.async_request_refresh()

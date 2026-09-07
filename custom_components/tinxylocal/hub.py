@@ -250,7 +250,7 @@ class TinxyLocalHub:
         payload: dict[str, Any] = {
             "password": encrypted_token,
             "action": action_val,
-            "relayNumber": command.relay_number,
+            "relayNumber": command.relay_number + 1,  # Hardware wire protocol is 1-indexed (1..N)
         }
 
         if command.brightness is not None and command.brightness >= 0:

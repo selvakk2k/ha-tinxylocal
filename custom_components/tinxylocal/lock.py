@@ -87,7 +87,7 @@ class TinxyLock(CoordinatorEntity[TinxyUpdateCoordinator], LockEntity):
         finally:
             self._attr_is_locked = True
             self.async_write_ha_state()
-            self.coordinator.async_request_refresh()
+            await self.coordinator.async_request_refresh()
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the door (pulse locks lock automatically)."""
