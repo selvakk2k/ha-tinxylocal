@@ -9,18 +9,18 @@
           "manual": "Manual Offline Setup"
         },
         "menu_option_descriptions": {
-          "cloud": "Retrieve your device list and encryption keys using an ephemeral API token. The token is immediately discarded after setup.",
-          "manual": "Configure directly using the local IP address and private device key (100% offline, no cloud account needed)."
+          "cloud": "Automatically find your devices and fetch local encryption keys using your Tinxy API token. The token is used only once during setup and is never stored.",
+          "manual": "Set up directly using your device's local IP address and private key (100% offline, no cloud account needed)."
         }
       },
       "cloud": {
         "title": "Tinxy Cloud Login",
-        "description": "Enter your Tinxy Cloud API token to retrieve your devices and local encryption keys. The API token is used once in memory and is **immediately discarded** upon saving.",
+        "description": "Enter your Tinxy API token to find your devices and get their local keys. Your token is used only once during setup and is **never saved** in Home Assistant.",
         "data": {
           "api_key": "Tinxy API Token"
         },
         "data_description": {
-          "api_key": "Personal API token generated from the Tinxy Web Portal (Profile -> API Token)."
+          "api_key": "Your personal API token from the Tinxy Web Portal (Profile -> API Token)."
         }
       },
       "select_cloud_device": {
@@ -32,7 +32,7 @@
         },
         "data_description": {
           "device_id": "Select the Tinxy switch, fan, or lock to configure.",
-          "host": "Local network IP address of the device on your Wi-Fi network (auto-detected)."
+          "host": "Local IP address of the switch on your Wi-Fi network (automatically detected)."
         }
       },
       "manual": {
