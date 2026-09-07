@@ -214,7 +214,7 @@ async def _async_reconcile_entity_registry(
                 ent_reg.async_remove(ent.entity_id)
 
     # 4. Clean up any empty orphaned devices from previous pairings
-    for device in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
+    for device in dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
         device_entries = er.async_entries_for_device(ent_reg, device.id)
         if not device_entries and (DOMAIN, current_node_id) not in device.identifiers:
             _LOGGER.info("Removing orphaned device '%s' (ID: %s)", device.name, device.id)
@@ -234,7 +234,7 @@ def _async_clean_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry, curre
     ent_reg = er.async_get(hass)
     dev_reg = dr.async_get(hass)
 
-    for device in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
+    for device in dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
         device_entries = er.async_entries_for_device(ent_reg, device.id)
         if not device_entries and (DOMAIN, current_node_id) not in device.identifiers:
             _LOGGER.info("Removing orphaned device '%s' (ID: %s)", device.name, device.id)
