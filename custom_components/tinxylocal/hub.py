@@ -290,6 +290,12 @@ class TinxyLocalHub:
             ) as response:
                 if response.status == 200:
                     return await response.json(content_type=None)
+                if response.status == 400:
+                    raise TinxyConnectionException(
+                        f"Request rejected (HTTP 400) by {url}: Device rejected command. "
+                        "Verify that the Device Key (MQTT password) is correct in integration options "
+                        "and that the device clock/timestamp is synchronized."
+                    )
                 raise TinxyConnectionException(
                     f"Request failed with status {response.status}"
                 )

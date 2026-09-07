@@ -16,6 +16,7 @@ from homeassistant.const import CONF_API_KEY, CONF_HOST
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import (
     CONF_DEVICE,
@@ -131,6 +132,123 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> TinxyLocalOptionsFlowHandler:
         """Get the options flow handler."""
         return TinxyLocalOptionsFlowHandler(config_entry)
+
+    async def async_step_zeroconf(
+        self, discovery_info: ZeroconfServiceInfo
+    ) -> FlowResult:
+        """Handle Zeroconf discovery from mDNS."""
+        host = str(discovery_info.host)
+
+        session = async_get_clientsession(self.hass)
+        hub = TinxyLocalHub(self.hass, host)
+        try:
+            info = await hub.fetch_device_data(session)
+        except Exception:
+            info = None
+
+        chip_id = None
+        if info and isinstance(info, dict):
+            chip_id = info.get("chip_id")
+
+        if not chip_id:
+            name_parts = discovery_info.name.split(".")[0]
+            if "-" in name_parts:
+                chip_id = name_parts.split("-", 1)[1]
+            else:
+                chip_id = name_parts
+
+        unique_id = str(chip_id).strip() if chip_id else f"tinxy_{host.replace('.', '_')}"
+
+        # Proactive DHCP IP synchronization if device is already configured
+        for entry in self._async_current_entries():
+            entry_chip_id = (
+                entry.data.get("device", {}).get("uuidRef", {}).get("uuid")
+                or entry.data.get("device", {}).get("chip_id")
+            )
+            if entry.unique_id in (unique_id, chip_id) or (entry_chip_id and entry_chip_id in (unique_id, chip_id)):
+                if entry.data.get(CONF_HOST) != host:
+                    self.hass.config_entries.async_update_entry(
+                        entry,
+                        data={**entry.data, CONF_HOST: host},
+                    )
+                return self.async_abort(reason="already_configured")
+
+        await self.async_set_unique_id(unique_id)
+        self._abort_if_unique_id_configured(updates={CONF_HOST: host})
+
+        self.discovered_ip = host
+        self.discovered_chip_id = unique_id
+
+        self.context["title_placeholders"] = {
+            "name": f"Tinxy ({host})",
+            "host": host,
+        }
+        return await self.async_step_zeroconf_confirm()
+
+    async def async_step_zeroconf_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Confirm Zeroconf discovery and enter device key."""
+        errors: dict[str, str] = {}
+        host = self.discovered_ip or ""
+        chip_id = self.discovered_chip_id or ""
+
+        if user_input is not None:
+            mqtt_pass = user_input[CONF_MQTT_PASS].strip()
+            name = user_input.get("name", f"Tinxy {chip_id}").strip()
+            relay_count = int(user_input.get(CONF_RELAY_COUNT, 2))
+
+            session = async_get_clientsession(self.hass)
+            hub = TinxyLocalHub(self.hass, host)
+            status = await hub.validate_ip(session)
+
+            if status != "ok":
+                errors["base"] = "cannot_connect_local"
+            else:
+                relays = [f"Switch {i+1}" for i in range(relay_count)]
+                types = ["Switch"] * relay_count
+                synthetic_device = {
+                    "_id": chip_id,
+                    "name": name,
+                    "mqttPassword": mqtt_pass,
+                    "devices": relays,
+                    "deviceTypes": types,
+                    "typeId": {"name": f"Tinxy {relay_count}-Node Switch"},
+                }
+
+                return self.async_create_entry(
+                    title=name,
+                    data={
+                        CONF_HOST: host,
+                        CONF_DEVICE_ID: chip_id,
+                        CONF_MQTT_PASS: mqtt_pass,
+                        CONF_DEVICE: synthetic_device,
+                    },
+                )
+
+        schema = vol.Schema(
+            {
+                vol.Required("name", default=f"Tinxy {chip_id}"): selector.TextSelector(),
+                vol.Required(CONF_MQTT_PASS): selector.TextSelector(
+                    selector.TextSelectorConfig(
+                        type=selector.TextSelectorType.PASSWORD,
+                        autocomplete="off",
+                    )
+                ),
+                vol.Optional(CONF_RELAY_COUNT, default=2): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=8, mode=selector.NumberSelectorMode.BOX
+                    )
+                ),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="zeroconf_confirm",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"host": host, "chip_id": chip_id},
+        )
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None

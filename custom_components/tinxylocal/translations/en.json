@@ -87,6 +87,20 @@
           "host": "Local static or DHCP reserved IP address on your Wi-Fi network.",
           "mqtt_pass": "The private encryption key assigned to the device (mqttPassword)."
         }
+      },
+      "zeroconf_confirm": {
+        "title": "Discovered Tinxy Device",
+        "description": "Found Tinxy device at **{host}** (Chip ID: `{chip_id}`). Please enter the device name and private Device Key (mqttPassword) to complete setup.",
+        "data": {
+          "name": "Device Name",
+          "mqtt_pass": "Device Key (mqttPassword)",
+          "relay_count": "Number of Relays"
+        },
+        "data_description": {
+          "name": "Friendly name for this device.",
+          "mqtt_pass": "The private encryption key assigned to the device (mqttPassword).",
+          "relay_count": "Number of relay channels on this switch module (1 to 8)."
+        }
       }
     },
     "error": {

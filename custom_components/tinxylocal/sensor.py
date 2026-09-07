@@ -5,7 +5,6 @@ from __future__ import annotations
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
-    SensorEntityDescription,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -26,14 +25,19 @@ async def async_setup_entry(
     entry_data = hass.data[DOMAIN][entry.entry_id]
     coordinator: TinxyUpdateCoordinator = entry_data["coordinator"]
 
-    node = coordinator.nodes[0]
-    node_id = node["device_id"]
+    sensors: list[TinxyDiagnosticSensorBase] = []
+    is_multi_node = len(coordinator.nodes) > 1
 
-    sensors = [
-        TinxyRssiSensor(coordinator, node_id),
-        TinxyIpSensor(coordinator, node_id),
-        TinxySsidSensor(coordinator, node_id),
-    ]
+    for node in coordinator.nodes:
+        node_id = node["device_id"]
+        node_name = node.get("name") or "Tinxy Device"
+        sensors.extend(
+            [
+                TinxyRssiSensor(coordinator, node_id, node_name, is_multi_node),
+                TinxyIpSensor(coordinator, node_id, node_name, is_multi_node),
+                TinxySsidSensor(coordinator, node_id, node_name, is_multi_node),
+            ]
+        )
 
     async_add_entities(sensors)
 
@@ -43,9 +47,17 @@ class TinxyDiagnosticSensorBase(CoordinatorEntity[TinxyUpdateCoordinator], Senso
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, coordinator: TinxyUpdateCoordinator, node_id: str) -> None:
+    def __init__(
+        self,
+        coordinator: TinxyUpdateCoordinator,
+        node_id: str,
+        node_name: str,
+        is_multi_node: bool = False,
+    ) -> None:
         super().__init__(coordinator)
         self.node_id = node_id
+        self.node_name = node_name
+        self.is_multi_node = is_multi_node
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -53,7 +65,7 @@ class TinxyDiagnosticSensorBase(CoordinatorEntity[TinxyUpdateCoordinator], Senso
         metadata = self.coordinator.device_metadata.get(self.node_id, {})
         return DeviceInfo(
             identifiers={(DOMAIN, self.node_id)},
-            name=self.coordinator.nodes[0]["name"],
+            name=self.node_name,
             manufacturer="Tinxy",
             model=metadata.get("model", "Tinxy Smart Device"),
             sw_version=metadata.get("firmware"),
@@ -67,10 +79,16 @@ class TinxyRssiSensor(TinxyDiagnosticSensorBase):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = SIGNAL_STRENGTH_DECIBELS_MILLIWATT
 
-    def __init__(self, coordinator: TinxyUpdateCoordinator, node_id: str) -> None:
-        super().__init__(coordinator, node_id)
+    def __init__(
+        self,
+        coordinator: TinxyUpdateCoordinator,
+        node_id: str,
+        node_name: str,
+        is_multi_node: bool = False,
+    ) -> None:
+        super().__init__(coordinator, node_id, node_name, is_multi_node)
         self._attr_unique_id = f"{node_id}_rssi"
-        self._attr_name = "Wi-Fi Signal"
+        self._attr_name = f"{node_name} Wi-Fi Signal" if is_multi_node else "Wi-Fi Signal"
 
     @property
     def native_value(self) -> int | None:
@@ -82,10 +100,16 @@ class TinxyRssiSensor(TinxyDiagnosticSensorBase):
 class TinxyIpSensor(TinxyDiagnosticSensorBase):
     """IP Address sensor."""
 
-    def __init__(self, coordinator: TinxyUpdateCoordinator, node_id: str) -> None:
-        super().__init__(coordinator, node_id)
+    def __init__(
+        self,
+        coordinator: TinxyUpdateCoordinator,
+        node_id: str,
+        node_name: str,
+        is_multi_node: bool = False,
+    ) -> None:
+        super().__init__(coordinator, node_id, node_name, is_multi_node)
         self._attr_unique_id = f"{node_id}_ip"
-        self._attr_name = "IP Address"
+        self._attr_name = f"{node_name} IP Address" if is_multi_node else "IP Address"
 
     @property
     def native_value(self) -> str | None:
@@ -97,10 +121,16 @@ class TinxyIpSensor(TinxyDiagnosticSensorBase):
 class TinxySsidSensor(TinxyDiagnosticSensorBase):
     """Connected Wi-Fi SSID sensor."""
 
-    def __init__(self, coordinator: TinxyUpdateCoordinator, node_id: str) -> None:
-        super().__init__(coordinator, node_id)
+    def __init__(
+        self,
+        coordinator: TinxyUpdateCoordinator,
+        node_id: str,
+        node_name: str,
+        is_multi_node: bool = False,
+    ) -> None:
+        super().__init__(coordinator, node_id, node_name, is_multi_node)
         self._attr_unique_id = f"{node_id}_ssid"
-        self._attr_name = "Wi-Fi SSID"
+        self._attr_name = f"{node_name} Wi-Fi SSID" if is_multi_node else "Wi-Fi SSID"
 
     @property
     def native_value(self) -> str | None:

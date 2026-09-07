@@ -185,3 +185,49 @@ async def test_switch_unique_id_and_hardware_feature_check():
     # Verify 1-indexed unique IDs matching upstream arevindh/tinxylocal
     assert added_switches[0].unique_id == "test_node_1_1"
     assert added_switches[1].unique_id == "test_node_1_2"
+
+
+@pytest.mark.asyncio
+async def test_sensor_setup_multi_node(hass):
+    """Test diagnostic sensors setup registers entities for each node in coordinator."""
+    from custom_components.tinxylocal.sensor import async_setup_entry as sensor_setup_entry
+    from custom_components.tinxylocal.const import DOMAIN
+
+    mock_entry = MagicMock()
+    mock_entry.entry_id = "test_entry"
+
+    mock_coordinator = MagicMock()
+    mock_coordinator.nodes = [
+        {"device_id": "node_1", "name": "Living Room"},
+        {"device_id": "node_2", "name": "Bedroom"},
+    ]
+    mock_coordinator.device_metadata = {
+        "node_1": {"rssi": -65, "ip": "192.168.0.101", "ssid": "HomeWiFi", "model": "2-Node", "firmware": "83"},
+        "node_2": {"rssi": -72, "ip": "192.168.0.102", "ssid": "HomeWiFi", "model": "4-Node", "firmware": "84"},
+    }
+
+    hass.data = {
+        DOMAIN: {
+            "test_entry": {
+                "coordinator": mock_coordinator,
+            }
+        }
+    }
+
+    added_sensors = []
+    await sensor_setup_entry(hass, mock_entry, lambda ents: added_sensors.extend(ents))
+
+    # 3 sensors per node (RSSI, IP, SSID) * 2 nodes = 6 sensors
+    assert len(added_sensors) == 6
+    unique_ids = [s.unique_id for s in added_sensors]
+    assert "node_1_rssi" in unique_ids
+    assert "node_1_ip" in unique_ids
+    assert "node_1_ssid" in unique_ids
+    assert "node_2_rssi" in unique_ids
+    assert "node_2_ip" in unique_ids
+    assert "node_2_ssid" in unique_ids
+
+    # For multi-node, names include node_name
+    rssi_1 = next(s for s in added_sensors if s.unique_id == "node_1_rssi")
+    assert rssi_1.name == "Living Room Wi-Fi Signal"
+    assert rssi_1.native_value == -65

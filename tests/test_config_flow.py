@@ -202,3 +202,100 @@ async def test_options_flow_description_placeholders(hass):
     result = await handler.async_step_init()
     assert result["type"] == FlowResultType.FORM
     assert result["description_placeholders"] == {"name": "Living Room"}
+
+@pytest.mark.asyncio
+async def test_zeroconf_discovery_new_device(hass):
+    """Test zeroconf discovers a new device and prompts for confirmation."""
+    import ipaddress
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {}
+
+    service_info = ZeroconfServiceInfo(
+        ip_address=ipaddress.ip_address("192.168.0.163"),
+        ip_addresses=[ipaddress.ip_address("192.168.0.163")],
+        port=80,
+        hostname="tinxy-6707357.local.",
+        type="_http._tcp.local.",
+        name="tinxy-6707357._http._tcp.local.",
+        properties={},
+    )
+
+    with patch(
+        "custom_components.tinxylocal.config_flow.TinxyLocalHub.fetch_device_data",
+        new_callable=AsyncMock,
+    ) as mock_info:
+        mock_info.return_value = {"chip_id": "6707357", "type": "WIFI_2SWITCH_V3"}
+        result = await flow.async_step_zeroconf(service_info)
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "zeroconf_confirm"
+    assert flow.discovered_ip == "192.168.0.163"
+    assert flow.discovered_chip_id == "6707357"
+
+    # User enters private key to complete onboarding
+    with patch(
+        "custom_components.tinxylocal.config_flow.TinxyLocalHub.validate_ip",
+        new_callable=AsyncMock,
+    ) as mock_val:
+        mock_val.return_value = "ok"
+        confirm_result = await flow.async_step_zeroconf_confirm(
+            {
+                "name": "Living Room Switch",
+                CONF_MQTT_PASS: "pass_12345",
+                CONF_RELAY_COUNT: 2,
+            }
+        )
+
+    assert confirm_result["type"] == FlowResultType.CREATE_ENTRY
+    assert confirm_result["title"] == "Living Room Switch"
+    assert confirm_result["data"][CONF_HOST] == "192.168.0.163"
+    assert confirm_result["data"][CONF_DEVICE_ID] == "6707357"
+    assert confirm_result["data"][CONF_MQTT_PASS] == "pass_12345"
+
+
+@pytest.mark.asyncio
+async def test_zeroconf_discovery_updates_existing_ip(hass):
+    """Test zeroconf automatically updates IP when device IP changes via DHCP."""
+    import ipaddress
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+    from custom_components.tinxylocal.const import DOMAIN
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="6707357",
+        data={
+            CONF_HOST: "192.168.0.100",  # Old IP
+            CONF_DEVICE_ID: "6707357",
+            "device": {"uuidRef": {"uuid": "6707357"}},
+        },
+    )
+    entry.add_to_hass(hass)
+
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {}
+
+    service_info = ZeroconfServiceInfo(
+        ip_address=ipaddress.ip_address("192.168.0.163"),  # New IP
+        ip_addresses=[ipaddress.ip_address("192.168.0.163")],
+        port=80,
+        hostname="tinxy-6707357.local.",
+        type="_http._tcp.local.",
+        name="tinxy-6707357._http._tcp.local.",
+        properties={},
+    )
+
+    with patch(
+        "custom_components.tinxylocal.config_flow.TinxyLocalHub.fetch_device_data",
+        new_callable=AsyncMock,
+    ) as mock_info:
+        mock_info.return_value = {"chip_id": "6707357"}
+        result = await flow.async_step_zeroconf(service_info)
+
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    assert entry.data[CONF_HOST] == "192.168.0.163"
