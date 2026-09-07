@@ -53,13 +53,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     mqtt_pass = entry.data.get(CONF_MQTT_PASS, "")
     host_ip = entry.data.get(CONF_HOST, "")
 
-    # Build sub-device relay mapping
+    # Build sub-device relay mapping safely handling null or blank types
     relays = []
-    if device_data.get("devices") and device_data.get("deviceTypes"):
-        for dev_name, dev_type in zip(
-            device_data["devices"], device_data["deviceTypes"], strict=False
-        ):
-            relays.append({"name": dev_name, "type": dev_type})
+    if device_data.get("devices"):
+        dev_names = device_data.get("devices") or []
+        dev_types = device_data.get("deviceTypes") or []
+        for i, raw_name in enumerate(dev_names):
+            raw_type = dev_types[i] if i < len(dev_types) and dev_types[i] else "Switch"
+            clean_type = str(raw_type) if raw_type else "Switch"
+            clean_name = raw_name if raw_name and str(raw_name).lower() != "none" else f"Relay {i + 1}"
+            relays.append({"name": clean_name, "type": clean_type})
     elif device_data.get("typeId", {}).get("gtype") == "action.devices.types.LOCK":
         relays.append({"name": device_name, "type": "Lock"})
 

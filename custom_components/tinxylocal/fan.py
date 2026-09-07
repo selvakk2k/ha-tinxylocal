@@ -40,10 +40,10 @@ async def async_setup_entry(
 
     fans: list[TinxyFan] = []
     for i, sub_dev in enumerate(node.get("devices", [])):
-        dev_name = sub_dev.get("name", f"Fan {i}")
-        dev_type = sub_dev.get("type", "")
+        dev_name = sub_dev.get("name") or f"Fan {i + 1}"
+        dev_type = sub_dev.get("type") or "Switch"
 
-        if dev_type.lower() == "fan" or "fan" in dev_name.lower():
+        if str(dev_type).lower() == "fan" or "fan" in str(dev_name).lower():
             fans.append(TinxyFan(coordinator, hub, node_id, dev_name, i, mqtt_pass))
 
     async_add_entities(fans)

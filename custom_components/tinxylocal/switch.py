@@ -37,11 +37,11 @@ async def async_setup_entry(
 
     switches: list[TinxySwitch] = []
     for i, sub_dev in enumerate(node.get("devices", [])):
-        dev_name = sub_dev.get("name", f"Relay {i}")
-        dev_type = sub_dev.get("type", "Switch")
+        dev_name = sub_dev.get("name") or f"Relay {i + 1}"
+        dev_type = sub_dev.get("type") or "Switch"
 
         # Fans and locks have dedicated platforms
-        if dev_type.lower() == "fan" or "fan" in dev_name.lower():
+        if str(dev_type).lower() == "fan" or "fan" in str(dev_name).lower():
             continue
 
         switches.append(

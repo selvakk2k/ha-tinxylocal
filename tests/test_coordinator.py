@@ -68,3 +68,31 @@ def test_request_timeout_propagation():
 
     assert coordinator.request_timeout == 12
     assert coordinator.hubs[0].request_timeout == 12
+
+
+@pytest.mark.asyncio
+async def test_null_device_types_handling():
+    """Verify that null/None elements in deviceTypes do not crash decoding."""
+    from custom_components.tinxylocal.hub import TinxyLocalHub
+
+    node = {
+        "device_id": "test_node_null",
+        "name": "Living Room",
+        "devices": [
+            {"name": "LED Bulb", "type": "LED Bulb"},
+            {"name": "Relay 2", "type": "Switch"},
+        ],
+    }
+
+    raw_data = {
+        "state": "00",
+        "bright": "",
+        "status": 1,
+        "rssi": -65,
+    }
+
+    decoded = TinxyLocalHub._decode_device_data(raw_data, node)
+    assert "LED Bulb_0" in decoded
+    assert "Relay 2_1" in decoded
+    assert decoded["LED Bulb_0"]["state"] is False
+    assert decoded["Relay 2_1"]["state"] is False
