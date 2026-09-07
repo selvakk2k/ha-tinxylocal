@@ -21,6 +21,22 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 
 ---
 
+## Table of Contents
+
+1. [Features](#features)
+2. [Tested Hardware Models](#tested-hardware-models)
+3. [Important Notes & Hardware Limits](#important-notes--hardware-limits)
+4. [How to Migrate from `arevindh/tinxylocal`](#how-to-migrate-from-arevindhtinxylocal)
+5. [Installation](#installation)
+6. [Setup & Configuration](#setup--configuration)
+   - [Automatic Discovery (Zeroconf / mDNS)](#automatic-discovery-zeroconf--mdns)
+   - [Manual Setup Workflow](#manual-setup-workflow)
+   - [Updating Settings & Keys In-Place](#updating-settings--keys-in-place)
+7. [Troubleshooting](#troubleshooting)
+8. [Credits & License](#credits--license)
+
+---
+
 ## Features
 
 ### 1. Pure Python (No Extra Binaries or Drivers)
@@ -173,10 +189,10 @@ logger:
 
 ## Credits & License
 
-### Upstream Project
+### Upstream Authors & Contributors
 * Originally created by [@arevindh](https://github.com/arevindh) and community contributors in [`arevindh/tinxylocal`](https://github.com/arevindh/tinxylocal).
 
-### Project Contributors & Attribution
+### Fork Maintainers & Contributors
 * **Lead Architecture & Hardware Testing**: [@selvakk2k](https://github.com/selvakk2k) — hardware validation on physical Tinxy switches, requirements, and release maintenance.
 * **Implementation & Engineering**: **Antigravity** (Google DeepMind) — pure-Python XXTEA encryption, asynchronous queue concurrency architecture, Home Assistant lifecycle migration, and automated test suite.
 * **Code Review & Auditing**: **Claude** (Anthropic) — architectural review, edge-case analysis, and upstream compatibility validation.
