@@ -119,6 +119,18 @@
           "mqtt_pass": "The private encryption key assigned to the device (mqttPassword).",
           "relay_count": "Number of relay channels on this switch module (1 to 8)."
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Tinxy Device",
+        "description": "Update the connection settings for **{name}**.",
+        "data": {
+          "host": "Local IP Address",
+          "mqtt_pass": "Device Key (mqttPassword)"
+        },
+        "data_description": {
+          "host": "The IPv4 address of the Tinxy device on your home network.",
+          "mqtt_pass": "The private encryption key assigned to the device."
+        }
       }
     },
     "error": {
@@ -130,7 +142,8 @@
       "device_not_found": "Discovered device was not found in your Tinxy cloud account."
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "reconfigure_successful": "Reconfiguration was successful."
     }
   },
   "options": {

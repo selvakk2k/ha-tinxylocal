@@ -372,3 +372,83 @@ async def test_zeroconf_discovery_updates_existing_ip(hass):
     assert result["type"] == FlowResultType.ABORT
     assert result["reason"] == "already_configured"
     assert entry.data[CONF_HOST] == "192.168.0.163"
+
+
+@pytest.mark.asyncio
+async def test_reconfigure_flow_success(hass):
+    """Test reconfigure flow updates host and device key."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from custom_components.tinxylocal.const import DOMAIN
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Living Room",
+        unique_id="6707357",
+        data={
+            CONF_HOST: "192.168.0.163",
+            CONF_DEVICE_ID: "6707357",
+            CONF_MQTT_PASS: "old_key_123",
+            "device": {"mqttPassword": "old_key_123", "name": "Living Room"},
+        },
+    )
+    entry.add_to_hass(hass)
+
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {
+        "source": "reconfigure",
+        "entry_id": entry.entry_id,
+    }
+
+    result = await flow.async_step_reconfigure()
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "reconfigure"
+    assert result["description_placeholders"] == {"name": "Living Room"}
+
+    with patch("custom_components.tinxylocal.config_flow.TinxyLocalHub.validate_ip", new_callable=AsyncMock) as mock_val:
+        mock_val.return_value = "ok"
+        confirm_result = await flow.async_step_reconfigure(
+            {CONF_HOST: "192.168.0.200", CONF_MQTT_PASS: "new_key_456"}
+        )
+
+    assert confirm_result["type"] == FlowResultType.ABORT
+    assert confirm_result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_HOST] == "192.168.0.200"
+    assert entry.data[CONF_MQTT_PASS] == "new_key_456"
+    assert entry.data["device"]["mqttPassword"] == "new_key_456"
+
+
+@pytest.mark.asyncio
+async def test_reconfigure_flow_cannot_connect(hass):
+    """Test reconfigure flow displays error when IP cannot connect."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from custom_components.tinxylocal.const import DOMAIN
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Living Room",
+        unique_id="6707357",
+        data={
+            CONF_HOST: "192.168.0.163",
+            CONF_DEVICE_ID: "6707357",
+            CONF_MQTT_PASS: "old_key_123",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {
+        "source": "reconfigure",
+        "entry_id": entry.entry_id,
+    }
+
+    with patch("custom_components.tinxylocal.config_flow.TinxyLocalHub.validate_ip", new_callable=AsyncMock) as mock_val:
+        mock_val.return_value = "timeout"
+        result = await flow.async_step_reconfigure(
+            {CONF_HOST: "192.168.0.250", CONF_MQTT_PASS: "some_key"}
+        )
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "reconfigure"
+    assert result["errors"]["base"] == "cannot_connect_local"

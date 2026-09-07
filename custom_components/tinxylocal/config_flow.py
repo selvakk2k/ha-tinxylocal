@@ -499,6 +499,60 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="select_cloud_device", data_schema=schema, errors=errors
         )
 
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle a reconfiguration flow initialized by the user."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            host = user_input[CONF_HOST].strip()
+            mqtt_pass = user_input[CONF_MQTT_PASS].strip()
+
+            session = async_get_clientsession(self.hass)
+            hub = TinxyLocalHub(self.hass, host)
+            status = await hub.validate_ip(session)
+
+            if status != "ok":
+                errors["base"] = "cannot_connect_local"
+            else:
+                new_data = {
+                    **entry.data,
+                    CONF_HOST: host,
+                    CONF_MQTT_PASS: mqtt_pass,
+                }
+                if "device" in new_data and isinstance(new_data["device"], dict):
+                    new_device = dict(new_data["device"])
+                    new_device["mqttPassword"] = mqtt_pass
+                    new_data["device"] = new_device
+
+                return self.async_update_reload_and_abort(entry, data=new_data)
+
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_HOST, default=entry.data.get(CONF_HOST, "")
+                ): selector.TextSelector(),
+                vol.Required(
+                    CONF_MQTT_PASS, default=entry.data.get(CONF_MQTT_PASS, "")
+                ): selector.TextSelector(
+                    selector.TextSelectorConfig(
+                        type=selector.TextSelectorType.PASSWORD,
+                        autocomplete="off",
+                    )
+                ),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"name": entry.title},
+        )
+
     async def async_step_manual(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:

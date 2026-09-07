@@ -143,11 +143,10 @@ Tinxy devices on your Wi-Fi network are automatically discovered by Home Assista
 
 ### Updating Settings & Keys In-Place
 
-Click **Configure** (the gear icon) on any Tinxy device card to adjust:
-* **Local IP Address**: Update the IP if it changes.
-* **Device Key**: Update the device key if you ever re-pair the device in the Tinxy app.
-* **Request Timeout**: Maximum seconds to wait for a local response (default: 5s).
-* **Polling Interval**: Seconds between background state checks (default: 5s).
+You can update device connection settings at any time without removing or re-adding the device:
+* **Reconfigure Flow (Recommended)**: Click the **⋮** menu on the Tinxy device card → **Reconfigure** to update the Local IP address or Device Key with immediate local reachability validation.
+* **Options Flow (Gear Icon)**: Click **Configure** on the integration card to adjust the request timeout (default: 5s) or background polling interval (default: 5s).
+* **Automatic DHCP IP Sync**: If your home router assigns a new local IP address to a paired device, Home Assistant detects the change via Zeroconf (mDNS) and updates the IP automatically without breaking automations.
 
 ---
 
