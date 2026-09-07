@@ -1,8 +1,7 @@
 # Tinxy Local Integration (`ha-tinxylocal`)
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://github.com/hacs/integration)
-[![Stable](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal?label=Stable&style=flat-square)](https://github.com/selvakk2k/ha-tinxylocal/releases/latest)
-[![Beta](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal?include_prereleases&label=Beta&color=orange&style=flat-square)](https://github.com/selvakk2k/ha-tinxylocal/releases)
+[![Version](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal?style=flat-square)](https://github.com/selvakk2k/ha-tinxylocal/releases)
 [![AI-Assisted](https://img.shields.io/badge/AI%20Assisted-Antigravity%20%7C%20Claude-blueviolet?style=flat-square&logo=google)](https://github.com/selvakk2k)
 [![AI Attribution](https://img.shields.io/badge/AI%20Attribution-AIA%20PAI%20Nc%20Hin-orange?style=flat-square)](https://aiattribution.github.io/interpret-attribution)
 
