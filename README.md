@@ -21,7 +21,7 @@ This repository is a modern, pure-Python reimplementation of `arevindh/tinxyloca
 * **In-Memory XXTEA Engine**: Implements the native XXTEA block cipher directly in Python with zero external pip dependencies (< 0.05ms execution time, 100% platform-independent).
 * **Instant Dashboard Feedback**: Optimistic state updates ensure switches flip instantaneously in the Lovelace UI without the 0.5s–1.0s network round-trip delay.
 
-### 2. Tuya-Local Setup Architecture
+### 2. Dual Setup Architecture (Cloud-Assisted or Air-Gapped)
 * **Cloud-Assisted Setup**: Uses an ephemeral API key to automatically retrieve device topology and private device keys (`mqttPassword`), then **immediately discards the API key**. Home Assistant never stores your master account token.
 * **Manual Offline Setup**: 100% air-gapped setup using local IP and device key with zero outbound internet packets.
 * **Configurable Polling & Timeout**: Customize request timeouts and polling intervals directly from the UI, with immediate background reloading.

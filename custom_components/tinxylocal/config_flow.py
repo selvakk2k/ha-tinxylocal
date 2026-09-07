@@ -1,4 +1,4 @@
-"""Config flow for Tinxy Local integration implementing the Tuya-Local architecture."""
+"""Config flow for Tinxy Local integration with ephemeral cloud setup and offline manual mode."""
 
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     await self.async_set_unique_id(selected_device["_id"])
                     self._abort_if_unique_id_configured()
 
-                    # Save config entry WITHOUT the cloud API token (Tuya Local paradigm)
+                    # Save config entry WITHOUT the cloud API token (ephemeral key discarded immediately)
                     return self.async_create_entry(
                         title=selected_device.get("name", "Tinxy Switch"),
                         data={
