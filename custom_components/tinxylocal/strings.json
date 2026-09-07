@@ -15,12 +15,12 @@
       },
       "cloud": {
         "title": "Tinxy Cloud Login",
-        "description": "Enter your Tinxy API token to find your devices and get their local keys. Your token is used only once during setup and is **never saved** in Home Assistant.",
+        "description": "Enter your Tinxy API token to find your devices and get their local keys. Your token is used once in memory to discover devices and is **never saved** in Home Assistant.\\n\\n\u26a0\ufe0f **Security Notice**: Never share your API token. It does not expire and cannot be revoked; if leaked, you must create a new Tinxy account.",
         "data": {
           "api_key": "Tinxy API Token"
         },
         "data_description": {
-          "api_key": "Your personal API token from the Tinxy Web Portal (Profile -> API Token)."
+          "api_key": "Found in the Tinxy mobile app: tap the hamburger menu (\u2630) in the top-right corner -> API Token."
         }
       },
       "select_cloud_device": {
