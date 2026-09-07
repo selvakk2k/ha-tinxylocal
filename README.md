@@ -16,7 +16,7 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 > ### Critical Security & Credential Warnings
 > * **Never Share Your Tinxy API Token**: Tinxy account API tokens have **no expiration date and cannot be revoked** from the app or portal. If your API token is ever leaked publicly (e.g. in GitHub issues, forum posts, or diagnostic logs), the **only** way to invalidate it is to create a completely new Tinxy account.
 > * **Never Share Your Device Key (`mqttPassword`)**: Device keys do not expire. If a device key is exposed, the only way to invalidate it and generate a new key is to completely remove and re-pair the physical device in the Tinxy mobile app.
-> * **Finding Your API Token**: In the Tinxy mobile app, tap the **hamburger menu icon (☰) in the top-right corner** and select **API Token**. (There is no profile page in the app).
+> * **Finding Your API Token**: In the Tinxy mobile app, tap the **hamburger menu icon (☰) in the top-right corner** and select **API Token**.
 
 
 ---
@@ -45,9 +45,9 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 * **Instant Dashboard Feedback**: Switches respond instantly in the Home Assistant dashboard without waiting for network delays.
 
 ### 2. Simple & Private Setup
-* **Automatic Discovery (Zeroconf / mDNS)**: Automatically detects Tinxy devices on your local network and offers a two-step choice between Cloud-Assisted (API token) or Manual Offline (Device Key) setup.
-* **Cloud-Assisted Setup**: Uses your Tinxy account token once during setup to discover devices, fetch their private local keys (`mqttPassword`), and automatically find their IP addresses on your home network. **The token is never stored in Home Assistant.**
-* **Manual Offline Setup**: Set up devices directly with their local IP address and private key—no internet connection or cloud account needed.
+* **Automatic Discovery (Zeroconf / mDNS)**: Automatically detects Tinxy devices on your local network and offers a two-step choice between Cloud-Assisted or Manual Offline setup:
+  * **Cloud-Assisted Setup**: Uses your Tinxy account token once during setup to discover devices, fetch their private local keys (`mqttPassword`), and automatically find their IP addresses on your home network. **The token is never stored in Home Assistant.**
+  * **Manual Offline Setup**: Set up devices directly with their local IP address and private key—no internet connection or cloud account needed.
 * **Official Reconfigure Flow**: Click the **⋮** menu on any device card → **Reconfigure** to update the local IP address or Device Key in-place with instant validation.
 * **Automatic DHCP IP Sync**: Automatically updates device IP addresses when your router assigns a new DHCP address, without breaking automations or entity IDs.
 
@@ -78,10 +78,11 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 
 ## Important Notes & Hardware Limits
 
-* **Cloud Commissioning & App Retention**:
-  * **Initial Setup**: Tinxy devices must initially be set up in the official Tinxy mobile app to join your 2.4 GHz Wi-Fi network and generate their communication key.
-  * **Keep Devices in the App**: Do **not** delete the device from your Tinxy mobile app after adding it to Home Assistant. Deleting a device from the cloud account triggers a factory password reset on the device, breaking local authentication.
-  * **Optional Internet Isolation**: Once paired with Home Assistant, you can safely block the device's IP address from accessing the internet in your Wi-Fi router or firewall settings. Because this integration operates 100% locally over LAN, the device will continue functioning offline, preventing accidental cloud resets or remote updates.
+> [!IMPORTANT]
+> ### Cloud Commissioning & App Retention
+> * **Initial Wi-Fi Pairing**: Tinxy devices must initially be paired using the official Tinxy mobile app to connect them to your 2.4 GHz Wi-Fi network and generate their communication credentials. Devices fresh out of the box or in setup hotspot mode (`Tinxy-XXXX`) cannot be detected by Home Assistant until joined to Wi-Fi.
+> * **Keep Devices in the App**: Do **not** delete the device from your Tinxy mobile app after adding it to Home Assistant. Deleting a device from the cloud account triggers a factory password reset on the device, breaking local authentication.
+> * **Optional Internet Isolation**: Once paired with Home Assistant, you can safely block the device's IP address from accessing the internet in your Wi-Fi router or firewall settings. Because this integration operates 100% locally over LAN, the device will continue functioning offline, preventing accidental cloud resets or remote updates.
 * **Microcontroller Capacity**: Tinxy devices run on lightweight ESP microcontrollers that handle one connection at a time. The integration uses a queue to send commands safely one after another.
 * **Local Polling**: Home Assistant checks device status over your home Wi-Fi every 15 seconds (configurable). Dashboard toggles update immediately, while flips of the physical wall switch update on the next poll cycle.
 * **EVA Bulbs Unsupported**: Tinxy EVA smart bulbs use a proprietary RF mesh back to an EVA bridge and do not have an IP address on your Wi-Fi network.
@@ -144,6 +145,10 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 > Tinxy hardware requires initial pairing via the official Tinxy app to connect to Wi-Fi and create device credentials. Keep the device registered in your app; deleting it resets the hardware's internal encryption key. If you want pure local isolation with zero cloud contact, block the device's internet access at your Wi-Fi router instead.
 
 ### Automatic Discovery (Zeroconf / mDNS)
+
+> [!NOTE]
+> **Only Discovers Already-Commissioned Devices**: Auto-detection discovers Tinxy devices that are already connected to your home Wi-Fi network. If a device is unboxed or factory-reset, it broadcasts its own temporary Wi-Fi access point (`Tinxy-XXXX`) and cannot be seen by Home Assistant until you join it to your home Wi-Fi via the Tinxy mobile app.
+
 Tinxy devices on your Wi-Fi network are automatically discovered by Home Assistant. When a discovery notification appears:
 1. Click **Configure**.
 2. Choose your preferred setup path:
