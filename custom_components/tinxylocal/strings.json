@@ -90,7 +90,25 @@
       },
       "zeroconf_confirm": {
         "title": "Discovered Tinxy Device",
-        "description": "Found Tinxy device at **{host}** (Chip ID: `{chip_id}`). Please enter the device name and private Device Key (mqttPassword) to complete setup.",
+        "description": "Found Tinxy device at **{host}** (Chip ID: `{chip_id}`). Choose how you want to configure this device:",
+        "menu_options": {
+          "zeroconf_cloud": "Cloud-Assisted (Use API Token)",
+          "zeroconf_manual": "Manual Offline (Enter Device Key directly)"
+        }
+      },
+      "zeroconf_cloud": {
+        "title": "Cloud-Assisted Zeroconf Setup",
+        "description": "Enter your Tinxy Cloud API Token to automatically retrieve the Device Key and configuration for device `{chip_id}` at **{host}**.",
+        "data": {
+          "api_key": "Tinxy API Token"
+        },
+        "data_description": {
+          "api_key": "Your personal API token generated from the Tinxy Android/iOS app or web portal."
+        }
+      },
+      "zeroconf_manual": {
+        "title": "Manual Offline Zeroconf Setup",
+        "description": "Enter the Device Key and configuration for device `{chip_id}` at **{host}**.",
         "data": {
           "name": "Device Name",
           "mqtt_pass": "Device Key (mqttPassword)",
@@ -108,7 +126,8 @@
       "cannot_connect_local": "Could not connect to device on local network. Ensure IP is correct and device is powered on.",
       "no_devices": "No devices found on this Tinxy account.",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+      "unknown": "[%key:common::config_flow::error::unknown%]",
+      "device_not_found": "Discovered device was not found in your Tinxy cloud account."
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"

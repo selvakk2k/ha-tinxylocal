@@ -188,7 +188,96 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_zeroconf_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Confirm Zeroconf discovery and enter device key."""
+        """Step 1 of Zeroconf: Choose between Cloud-Assisted and Manual Offline setup."""
+        host = self.discovered_ip or ""
+        chip_id = self.discovered_chip_id or ""
+
+        return self.async_show_menu(
+            step_id="zeroconf_confirm",
+            menu_options=["zeroconf_cloud", "zeroconf_manual"],
+            description_placeholders={"host": host, "chip_id": chip_id},
+        )
+
+    async def async_step_zeroconf_cloud(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Cloud-assisted Zeroconf setup: look up device key and details using API token."""
+        errors: dict[str, str] = {}
+        host = self.discovered_ip or ""
+        chip_id = self.discovered_chip_id or ""
+
+        if user_input is not None:
+            api_token = user_input[CONF_API_KEY].strip()
+            session = async_get_clientsession(self.hass)
+
+            try:
+                host_config = TinxyHostConfiguration(
+                    api_token=api_token, api_url=TINXY_BACKEND
+                )
+                api = TinxyCloud(host_config=host_config, web_session=session)
+                dev_list = await api.get_device_list()
+
+                if not dev_list:
+                    errors["base"] = "no_devices"
+                else:
+                    matched_device = None
+                    for d in dev_list:
+                        cid = str(d.get("uuidRef", {}).get("uuid") or d.get("chip_id") or "").strip()
+                        did = str(d.get("_id") or "").strip()
+                        if chip_id in (cid, did):
+                            matched_device = d
+                            break
+
+                    if not matched_device:
+                        errors["base"] = "device_not_found"
+                    else:
+                        hub = TinxyLocalHub(self.hass, host)
+                        status = await hub.validate_ip(session)
+
+                        if status != "ok":
+                            errors["base"] = "cannot_connect_local"
+                        else:
+                            name = matched_device.get("name") or f"Tinxy {chip_id}"
+                            mqtt_pass = matched_device.get("mqttPassword", "").strip()
+                            device_id = matched_device.get("_id") or chip_id
+
+                            return self.async_create_entry(
+                                title=name,
+                                data={
+                                    CONF_HOST: host,
+                                    CONF_DEVICE_ID: device_id,
+                                    CONF_MQTT_PASS: mqtt_pass,
+                                    CONF_DEVICE: matched_device,
+                                },
+                            )
+            except TinxyAuthenticationException:
+                errors["base"] = "invalid_auth"
+            except Exception as err:
+                _LOGGER.error("Failed connecting to Tinxy cloud in Zeroconf flow: %s", err)
+                errors["base"] = "cannot_connect"
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_API_KEY): selector.TextSelector(
+                    selector.TextSelectorConfig(
+                        type=selector.TextSelectorType.PASSWORD,
+                        autocomplete="off",
+                    )
+                )
+            }
+        )
+
+        return self.async_show_form(
+            step_id="zeroconf_cloud",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"host": host, "chip_id": chip_id},
+        )
+
+    async def async_step_zeroconf_manual(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manual offline Zeroconf setup: enter device key directly."""
         errors: dict[str, str] = {}
         host = self.discovered_ip or ""
         chip_id = self.discovered_chip_id or ""
@@ -244,7 +333,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         return self.async_show_form(
-            step_id="zeroconf_confirm",
+            step_id="zeroconf_manual",
             data_schema=schema,
             errors=errors,
             description_placeholders={"host": host, "chip_id": chip_id},

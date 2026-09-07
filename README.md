@@ -114,6 +114,15 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 
 ## Setup & Configuration
 
+### Automatic Discovery (Zeroconf / mDNS)
+Tinxy devices on your Wi-Fi network are automatically discovered by Home Assistant. When a discovery notification appears:
+1. Click **Configure**.
+2. Choose your preferred setup path:
+   * **Cloud-Assisted**: Enter your Tinxy API Token to automatically look up the Device Key (`mqttPassword`), official name, and channel topology from your account.
+   * **Manual Offline**: Enter the 10-character Device Key directly for 100% local, air-gapped onboarding.
+
+### Manual Setup Workflow
+
 1. In Home Assistant, go to **Settings → Devices & Services** → **+ Add Integration**.
 2. Search for **Tinxy Local**.
 

@@ -230,18 +230,20 @@ async def test_zeroconf_discovery_new_device(hass):
         mock_info.return_value = {"chip_id": "6707357", "type": "WIFI_2SWITCH_V3"}
         result = await flow.async_step_zeroconf(service_info)
 
-    assert result["type"] == FlowResultType.FORM
+    assert result["type"] == FlowResultType.MENU
     assert result["step_id"] == "zeroconf_confirm"
+    assert "zeroconf_cloud" in result["menu_options"]
+    assert "zeroconf_manual" in result["menu_options"]
     assert flow.discovered_ip == "192.168.0.163"
     assert flow.discovered_chip_id == "6707357"
 
-    # User enters private key to complete onboarding
+    # Option A: User chooses manual setup and enters private key
     with patch(
         "custom_components.tinxylocal.config_flow.TinxyLocalHub.validate_ip",
         new_callable=AsyncMock,
     ) as mock_val:
         mock_val.return_value = "ok"
-        confirm_result = await flow.async_step_zeroconf_confirm(
+        manual_result = await flow.async_step_zeroconf_manual(
             {
                 "name": "Living Room Switch",
                 CONF_MQTT_PASS: "pass_12345",
@@ -249,11 +251,82 @@ async def test_zeroconf_discovery_new_device(hass):
             }
         )
 
-    assert confirm_result["type"] == FlowResultType.CREATE_ENTRY
-    assert confirm_result["title"] == "Living Room Switch"
-    assert confirm_result["data"][CONF_HOST] == "192.168.0.163"
-    assert confirm_result["data"][CONF_DEVICE_ID] == "6707357"
-    assert confirm_result["data"][CONF_MQTT_PASS] == "pass_12345"
+    assert manual_result["type"] == FlowResultType.CREATE_ENTRY
+    assert manual_result["title"] == "Living Room Switch"
+    assert manual_result["data"][CONF_HOST] == "192.168.0.163"
+    assert manual_result["data"][CONF_DEVICE_ID] == "6707357"
+    assert manual_result["data"][CONF_MQTT_PASS] == "pass_12345"
+
+
+@pytest.mark.asyncio
+async def test_zeroconf_cloud_assisted_setup(hass):
+    """Test zeroconf cloud-assisted setup automatically retrieves device key and configuration."""
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {}
+    flow.discovered_ip = "192.168.0.163"
+    flow.discovered_chip_id = "6707357"
+
+    mock_devices = [
+        {
+            "_id": "6a9ec90206d399c976aefdeb",
+            "name": "Living Room Switch",
+            "mqttPassword": "cloud_secret_pass",
+            "uuidRef": {"uuid": "6707357"},
+            "devices": ["Bulb", "Socket"],
+            "deviceTypes": ["Switch", "Switch"],
+            "typeId": {"numberOfRelays": 2},
+        }
+    ]
+
+    with patch(
+        "custom_components.tinxylocal.config_flow.TinxyCloud.get_device_list",
+        new_callable=AsyncMock,
+    ) as mock_list, patch(
+        "custom_components.tinxylocal.config_flow.TinxyLocalHub.validate_ip",
+        new_callable=AsyncMock,
+    ) as mock_val:
+        mock_list.return_value = mock_devices
+        mock_val.return_value = "ok"
+
+        result = await flow.async_step_zeroconf_cloud({CONF_API_KEY: "valid_token_123"})
+
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert result["title"] == "Living Room Switch"
+    assert result["data"][CONF_HOST] == "192.168.0.163"
+    assert result["data"][CONF_DEVICE_ID] == "6a9ec90206d399c976aefdeb"
+    assert result["data"][CONF_MQTT_PASS] == "cloud_secret_pass"
+    assert result["data"][CONF_DEVICE]["name"] == "Living Room Switch"
+
+
+@pytest.mark.asyncio
+async def test_zeroconf_cloud_device_not_found(hass):
+    """Test zeroconf cloud setup reports error when discovered device is not in cloud account."""
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {}
+    flow.discovered_ip = "192.168.0.163"
+    flow.discovered_chip_id = "9999999"  # Different chip ID
+
+    mock_devices = [
+        {
+            "_id": "6a9ec90206d399c976aefdeb",
+            "name": "Different Device",
+            "mqttPassword": "cloud_secret_pass",
+            "uuidRef": {"uuid": "6707357"},
+        }
+    ]
+
+    with patch(
+        "custom_components.tinxylocal.config_flow.TinxyCloud.get_device_list",
+        new_callable=AsyncMock,
+    ) as mock_list:
+        mock_list.return_value = mock_devices
+        result = await flow.async_step_zeroconf_cloud({CONF_API_KEY: "valid_token_123"})
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "zeroconf_cloud"
+    assert result["errors"]["base"] == "device_not_found"
 
 
 @pytest.mark.asyncio
