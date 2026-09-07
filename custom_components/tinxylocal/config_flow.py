@@ -31,7 +31,7 @@ from .const import (
     TINXY_BACKEND,
 )
 from .hub import TinxyLocalHub
-from .tinxycloud import TinxyCloud, TinxyHostConfiguration
+from .tinxycloud import TinxyAuthenticationException, TinxyCloud, TinxyHostConfiguration
 
 _LOGGER = logging.getLogger(__name__)
 

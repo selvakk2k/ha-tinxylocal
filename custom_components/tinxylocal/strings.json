@@ -38,7 +38,8 @@
     "error": {
       "cannot_connect": "Failed to connect to Tinxy cloud.",
       "cannot_connect_local": "Could not connect to device on local network. Ensure IP is correct and local API is enabled.",
-      "no_devices": "No devices found on this account."
+      "no_devices": "No devices found on this account.",
+      "invalid_auth": "Invalid API token. Please check your token from the Tinxy portal."
     },
     "abort": {
       "already_configured": "This device is already configured in Home Assistant."
