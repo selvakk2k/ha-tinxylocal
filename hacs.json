@@ -1,6 +1,11 @@
 {
-  "name": "Tinxy Local",
+  "name": "Tinxy Local Python",
   "render_readme": true,
-  "domains": ["switch", "fan", "lock", "sensor"],
+  "domains": [
+    "switch",
+    "fan",
+    "lock",
+    "sensor"
+  ],
   "homeassistant": "2024.12.0"
 }

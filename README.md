@@ -1,4 +1,4 @@
-# Tinxy Local Integration (`ha-tinxylocal`)
+# Tinxy Local Python (`ha-tinxylocal`)
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://github.com/hacs/integration)
 [![Version](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal?style=flat-square)](https://github.com/selvakk2k/ha-tinxylocal/releases)
@@ -109,7 +109,7 @@ Because this integration uses the exact same domain (`tinxylocal`), **all your e
    https://github.com/selvakk2k/ha-tinxylocal
    ```
 7. Select **Integration** as the category and click **Add**.
-8. Find **Tinxy Local**, click **Download**, and restart Home Assistant.
+8. Find **Tinxy Local Python**, click **Download**, and restart Home Assistant.
 
 Home Assistant will automatically run the upgrade migration, strip any old plaintext account tokens from storage for privacy, and load your devices using the new code.
 
@@ -127,7 +127,7 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
    https://github.com/selvakk2k/ha-tinxylocal
    ```
 5. Choose **Integration** as the category and click **Add**.
-6. Find **Tinxy Local**, click **Download**, and restart Home Assistant.
+6. Find **Tinxy Local Python**, click **Download**, and restart Home Assistant.
 
 ### Method 2: Manual Installation
 
@@ -153,7 +153,7 @@ Tinxy devices on your Wi-Fi network are automatically discovered by Home Assista
 ### Manual Setup Workflow
 
 1. In Home Assistant, go to **Settings → Devices & Services** → **+ Add Integration**.
-2. Search for **Tinxy Local**.
+2. Search for **Tinxy Local Python**.
 
 ### Option A: Cloud-Assisted Setup (Recommended)
 1. Choose **Cloud-Assisted Setup**.

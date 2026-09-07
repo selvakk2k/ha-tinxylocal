@@ -1,6 +1,6 @@
 {
   "domain": "tinxylocal",
-  "name": "Tinxy Local (LAN)",
+  "name": "Tinxy Local Python",
   "codeowners": [
     "@selvakk2k"
   ],
@@ -18,6 +18,6 @@
       "type": "_http._tcp.local."
     }
   ],
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0-beta.2",
   "homeassistant": ">=2024.12.0"
 }
