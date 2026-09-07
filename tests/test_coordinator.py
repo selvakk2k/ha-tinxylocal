@@ -96,3 +96,34 @@ async def test_null_device_types_handling():
     assert "Relay 2_1" in decoded
     assert decoded["LED Bulb_0"]["state"] is False
     assert decoded["Relay 2_1"]["state"] is False
+
+
+@pytest.mark.asyncio
+async def test_migration_v1_to_v2_strips_api_key():
+    """Verify that migration from v1 to v2 strips legacy api_key and upgrades version to 2."""
+    from custom_components.tinxylocal import async_migrate_entry
+    from unittest.mock import MagicMock
+
+    mock_hass = MagicMock()
+    mock_entry = MagicMock()
+    mock_entry.version = 1
+    mock_entry.title = "Living Room"
+    mock_entry.data = {
+        "api_key": "legacy_master_account_token",
+        "host": "192.168.0.163",
+        "mqtt_pass": "secret123",
+        "device_id": "tinxy_dev_1",
+    }
+
+    result = await async_migrate_entry(mock_hass, mock_entry)
+    assert result is True
+
+    # Verify async_update_entry was called with version=2 and data without api_key
+    mock_hass.config_entries.async_update_entry.assert_called_once()
+    call_args = mock_hass.config_entries.async_update_entry.call_args
+    updated_data = call_args.kwargs["data"]
+    updated_version = call_args.kwargs["version"]
+
+    assert "api_key" not in updated_data
+    assert updated_data["host"] == "192.168.0.163"
+    assert updated_version == 2

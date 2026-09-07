@@ -116,7 +116,7 @@ async def async_discover_tinxy_devices(
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle config flow for Tinxy Local."""
 
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:
         """Initialize the config flow."""

@@ -121,17 +121,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry to current schema version."""
-    _LOGGER.debug(
-        "Migrating Tinxy Local entry %s from version %s",
+    _LOGGER.info(
+        "Migrating Tinxy Local entry '%s' from version %s to version 2",
         config_entry.title,
         config_entry.version,
     )
 
     if config_entry.version == 1:
-        # Strip legacy API key if present to enforce ephemeral local privacy
+        # Strip legacy plaintext API key if present to enforce ephemeral local privacy
         new_data = {**config_entry.data}
         if "api_key" in new_data:
             new_data.pop("api_key")
-        hass.config_entries.async_update_entry(config_entry, data=new_data)
+            _LOGGER.info("Stripped legacy plaintext api_key from entry '%s' for local privacy", config_entry.title)
+
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
+        _LOGGER.info("Migration of Tinxy Local entry '%s' to version 2 successful", config_entry.title)
 
     return True
