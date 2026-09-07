@@ -1,10 +1,14 @@
 {
   "domain": "tinxylocal",
   "name": "Tinxy Local (LAN)",
-  "codeowners": ["@selvakk2k"],
+  "codeowners": [
+    "@selvakk2k"
+  ],
   "config_flow": true,
   "description": "Fast, 100% local LAN integration for Tinxy Smart Devices.",
-  "dependencies": [],
+  "dependencies": [
+    "network"
+  ],
   "documentation": "https://github.com/selvakk2k/ha-tinxylocal/blob/main/README.md",
   "issue_tracker": "https://github.com/selvakk2k/ha-tinxylocal/issues",
   "iot_class": "local_polling",
