@@ -1,24 +1,62 @@
-# Tinxy Local (ha-tinxylocal)
+# Tinxy Local Integration (`ha-tinxylocal`)
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/default)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
-[![Home Assistant: 2024.12+](https://img.shields.io/badge/Home%20Assistant-2024.12+-blue.svg)](https://www.home-assistant.io/)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![Version](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal)](https://github.com/selvakk2k/ha-tinxylocal/releases)
 
 A modern, fast, pure-Python Home Assistant custom integration for **100% local LAN control** of **Tinxy Smart Devices** (smart switches, fan controllers, and pulse door locks).
 
+This repository is a modern, pure-Python reimplementation of `arevindh/tinxylocal`, designed to eliminate bundled Go CLI binaries, resolve Home Assistant 2026+ deprecations, and introduce a concurrency-safe sequential command queue.
+
+> [!IMPORTANT]
+> This integration is designed for Tinxy devices with **local HTTP control enabled**. It is **not compatible** with Tinxy EVA smart bulbs, which use a cloud/BLE-only protocol and do not run a local HTTP server on port 80.
+
 ---
 
-## Key Highlights & Improvements
+## Features
 
-* **100% Pure Python (Zero Binary Bloat)**: Replaces ~36 MB of bundled precompiled Go CLI binaries and subprocess forks with an in-memory, open-source XXTEA encryption engine (< 40 KB footprint).
-* **Tuya-Local Setup Architecture**:
-  * **Cloud-Assisted Setup**: Uses an ephemeral API key to automatically retrieve device topology and private device keys (`mqttPassword`), then **immediately discards the API key**. Home Assistant never stores your master account token.
-  * **Manual Offline Setup**: 100% air-gapped setup using local IP and device key with zero outbound internet packets.
-* **Instant Dashboard Feedback**: Optimistic state updates ensure switches flip instantaneously in Lovelace without the 0.5s–1.0s network delay.
-* **Concurrent Command Queue (Fixes Upstream Issue #9)**: Implements an internal FIFO sequential queue with rate-limiting and connection reuse, preventing "Turn off all switches" scenes from overwhelming the single-threaded ESP web server.
-* **HA 2026+ Ready**: Fully typed, passes `sw_version` as a string, and eliminates repeated device registry churn from the polling loop.
-* **Diagnostic Sensors**: Exposes Wi-Fi signal strength in dBm (`SensorDeviceClass.SIGNAL_STRENGTH`), connected SSID, and local IP.
+### 1. Pure Python Architecture (Zero Binaries)
+* **No Compiled CLI Binaries**: Completely eliminates the ~36 MB of bundled Go CLI executables (`tinxy-cli_*`), shared libraries, and `asyncio.create_subprocess_exec` process forks.
+* **In-Memory XXTEA Engine**: Implements the native XXTEA block cipher directly in Python with zero external pip dependencies (< 0.05ms execution time, 100% platform-independent).
+* **Instant Dashboard Feedback**: Optimistic state updates ensure switches flip instantaneously in the Lovelace UI without the 0.5s–1.0s network round-trip delay.
+
+### 2. Tuya-Local Setup Architecture
+* **Cloud-Assisted Setup**: Uses an ephemeral API key to automatically retrieve device topology and private device keys (`mqttPassword`), then **immediately discards the API key**. Home Assistant never stores your master account token.
+* **Manual Offline Setup**: 100% air-gapped setup using local IP and device key with zero outbound internet packets.
+* **Configurable Polling & Timeout**: Customize request timeouts and polling intervals directly from the UI, with immediate background reloading.
+
+### 3. Concurrency & Reliability (Fixes Upstream Issue #9)
+* **Sequential FIFO Command Queue**: Implements an internal rate-limited queue with connection reuse (HTTP keep-alive), preventing simultaneous "Turn off all switches" scenes from overwhelming the single-threaded ESP web server.
+* **Automatic Deduplication**: Rapid repeat toggles for the same relay are automatically superseded in the queue.
+* **Safe Credential Handling**: Resolves brittle `nodes[0]` references by passing the device key directly to each entity.
+
+### 4. Diagnostics & HA 2026+ Standards
+* **String-Coerced Firmware**: Resolves the `sw_version` integer warning, ensuring compliance ahead of Home Assistant 2026.12.0.
+* **Zero Registry Churn**: Eliminates recurring `device_registry.async_get_or_create` calls from the polling loop.
+* **Diagnostic Sensors**: Exposes Wi-Fi signal strength in dBm (`SensorDeviceClass.SIGNAL_STRENGTH`), connected SSID, and local IP address under the device card.
 * **Native Zeroconf Discovery**: Automatically detects `tinxy*` devices on your local network.
+
+---
+
+## Tested Models
+
+This integration has been tested on the following hardware models:
+
+| Model | Source | Features Verified |
+| :--- | :--- | :--- |
+| **Tinxy 2-Node Switch** | Tested in this repository | 2x Relay Control, Optimistic UI, RSSI & Diagnostic Sensors, Queue Concurrency |
+| **Tinxy 1-Node Switch** | Assumed compatible | Single Relay Control |
+| **Tinxy 4-Node Switch** | Assumed compatible | 4x Relay Control, Sequential Dispatch |
+| **Tinxy 6-Node Switch** | Assumed compatible | 6x Relay Control, Sequential Dispatch |
+| **Tinxy Fan Controllers** | Assumed compatible | 3-Speed Percentage Control (33%, 66%, 100%), Speed Memory on Toggle |
+| **Tinxy Door Locks** | Assumed compatible | Pulse Unlock Relay |
+
+---
+
+## Caveats & Integration Limitations
+
+* **Single-Threaded ESP Web Server**: Tinxy devices run on low-power ESP microcontrollers whose local HTTP server cannot handle simultaneous TCP connections. All outgoing control commands are managed through an internal sequential queue (~0.25s spacing) to prevent socket lockups.
+* **Local Polling vs. Cloud Push**: Device status is polled over LAN via `GET /info` at your configured interval (default 15 seconds). Dashboard interactions update optimistically in 0ms, but physical wall-switch changes will reflect in Home Assistant on the next poll cycle.
+* **EVA Bulbs Unsupported**: Tinxy EVA smart bulbs do not support local HTTP on port 80 and require the cloud-based integration.
 
 ---
 
@@ -26,81 +64,105 @@ A modern, fast, pure-Python Home Assistant custom integration for **100% local L
 
 Because this integration preserves `DOMAIN = "tinxylocal"`, **all your existing entity IDs (e.g. `switch.living_room_foyer_light`), dashboard cards, recorder statistics, and automations continue working with zero breaking changes.**
 
-To migrate cleanly in HACS:
+To migrate cleanly:
 
-1. In Home Assistant, open **HACS** > **Integrations**.
-2. Find the old **Tinxy Local** integration card.
-3. Click the three dots (⋮) in the top-right corner of the card and select **Redownload** or **Remove** (do **not** delete the integration under *Settings > Devices & Services*; only remove the HACS repo pointer).
-4. Click the three dots (⋮) in the top right of the main HACS page > **Custom repositories**.
-5. Add repository URL:
+1. In Home Assistant, navigate to **HACS** → **Integrations**.
+2. Locate the old **Tinxy Local** integration card.
+3. Click the three dots (⋮) on the card and select **Remove** (do **not** delete the integration under *Settings → Devices & Services*; only remove the HACS repository pointer).
+4. *(Recommended)* Using the Studio Code Server add-on or terminal, remove the old `custom_components/tinxylocal/build` folder to purge the ~36 MB of legacy Go binaries:
+   ```bash
+   rm -rf /config/custom_components/tinxylocal/build
+   ```
+5. In HACS, click the three dots (⋮) in the top-right corner → **Custom repositories**.
+6. Under **URL**, add:
    ```text
    https://github.com/selvakk2k/ha-tinxylocal
    ```
-   Category: **Integration**.
-6. Click **Add**, find **Tinxy Local (LAN)**, and click **Download**.
-7. Restart Home Assistant.
+7. Select **Integration** as the category and click **Add**.
+8. Find **Tinxy Local (LAN)**, click **Download**, and restart Home Assistant.
 
 All your existing devices will automatically load using the new pure-Python engine.
 
 ---
 
-## Installation via HACS
+## Installation
 
-1. Make sure [HACS](https://hacs.xyz/) is installed.
-2. Go to **HACS** > **Integrations** > **Three dots (top right)** > **Custom repositories**.
-3. Add repository:
+### Method 1: Using HACS (Recommended)
+
+1. Ensure [HACS](https://hacs.xyz/) is installed.
+2. In Home Assistant, open **HACS** → **Integrations** → click the three dots (⋮) in the top-right corner.
+3. Select **Custom repositories**.
+4. Under **URL**, add:
    ```text
    https://github.com/selvakk2k/ha-tinxylocal
    ```
-   Category: **Integration**.
-4. Click **Download** and restart Home Assistant.
+5. Select **Integration** as the category and click **Add**.
+6. Search for **Tinxy Local (LAN)**, click **Download**, and restart Home Assistant.
+
+### Method 2: Manual Installation
+
+1. Download the latest release ZIP from the [Releases](https://github.com/selvakk2k/ha-tinxylocal/releases) page.
+2. Copy the folder `custom_components/tinxylocal` into your Home Assistant's `custom_components/` directory.
+3. Restart Home Assistant.
 
 ---
 
-## Setup & Configuration
+## Configuration
 
-Go to **Settings** > **Devices & Services** > **Add Integration** > search for **Tinxy Local**.
+1. In Home Assistant, navigate to **Settings → Devices & Services** → **+ Add Integration**.
+2. Search for **Tinxy Local**.
 
 ### Option A: Cloud-Assisted Setup (Recommended)
-1. Paste your Tinxy Cloud API Key (generated from your Tinxy portal).
-2. Home Assistant makes an ephemeral HTTPS call to retrieve your device names and private device keys (`mqttPassword`).
-3. Select your device from the dropdown and enter its local IP address on your network (e.g. `192.168.0.163`).
-4. **The API key is discarded** and the integration switches to 100% local LAN operation.
+1. Select **Cloud-Assisted**.
+2. Paste your Tinxy Cloud API Key (generated from your Tinxy portal).
+3. Home Assistant makes an ephemeral HTTPS call to retrieve your device names and private device keys (`mqttPassword`).
+4. Select your device from the dropdown and enter its local IP address on your network (e.g. `192.168.0.163`).
+5. **The API key is discarded** and the integration switches to 100% local LAN operation.
 
 ### Option B: Manual Local Setup (100% Air-Gapped)
 1. Select **Manual Local**.
 2. Enter:
-   * Device Name (e.g. "Living Room Switch")
-   * Local IP address (`192.168.0.x`)
-   * Device Key (`mqttPassword`)
-   * Number of relays (e.g. 1, 2, 4, 6)
+   * **Device Name** (e.g. "Living Room Switch")
+   * **Local IP Address** (`192.168.0.x`)
+   * **Device Key** (`mqttPassword`)
+   * **Number of Relays** (e.g. 1, 2, 4, 6)
 3. Connects directly to `http://<ip>/info` over your LAN. Zero cloud calls made.
 
----
+### Options & Per-Device Tuning
 
-## Supported Devices
-
-* **Tinxy 1-Node Switch**
-* **Tinxy 2-Node Switch**
-* **Tinxy 4-Node Switch**
-* **Tinxy 6-Node Switch**
-* **Tinxy Fan Controllers** (3-speed percentage control: 33%, 66%, 100%)
-* **Tinxy Door Locks** (Pulse unlock relay)
-
-*(Note: EVA Bulbs require cloud MQTT and do not support local HTTP on port 80).*
+Click **Configure** on any Tinxy device card to customize:
+* **Local IP Address**: Update device IP if it changes.
+* **Device Key**: View or update the masked `mqttPassword`.
+* **Request Timeout**: Adjust network timeout (1–30 seconds).
+* **Polling Interval**: Adjust status polling frequency (3–300 seconds).
 
 ---
 
-## Troubleshooting
+## Troubleshooting & Logs
 
-### Device times out or shows Unavailable
-1. Assign a **static / reserved DHCP IP** to your Tinxy switch in your router settings.
-2. Increase the **Request Timeout** (e.g. 8s) or **Polling Interval** (e.g. 15s) in **Settings > Devices & Services > Tinxy Local > Configure**.
-3. If the onboard ESP microcontroller's socket crashes due to a Wi-Fi surge, power cycle the wall switch or circuit breaker for 10 seconds to reboot the hardware.
+### 1. Device Times Out or Shows Unavailable
+* **DHCP Reservation**: Assign a static / reserved IP to your Tinxy switch in your router settings.
+* **Adjust Timeout & Polling**: If Wi-Fi reception is weak, increase the **Request Timeout** (e.g. 8s) and **Polling Interval** (e.g. 15s) under **Configure**.
+* **Microcontroller Recovery**: If the onboard ESP socket crashes due to a network glitch, power-cycle the wall switch or circuit breaker for 10 seconds to reboot the hardware.
+
+### 2. Enabling Debug Logging
+Add the following to your `configuration.yaml` and restart Home Assistant:
+```yaml
+logger:
+  default: warning
+  logs:
+    custom_components.tinxylocal: debug
+```
 
 ---
 
-## Acknowledgements & Credits
+## Credits & License
 
-* Originally based on and inspired by the work of [arevindh/tinxylocal](https://github.com/arevindh/tinxylocal) by **@arevindh** and earlier contributors.
-* Licensed under the [GNU Affero General Public License v3.0](LICENSE).
+### Upstream Authors & Contributors
+* Originally designed and written by [@arevindh](https://github.com/arevindh) and contributors in [`arevindh/tinxylocal`](https://github.com/arevindh/tinxylocal).
+* Special thanks to the earlier contributors for reverse-engineering the Tinxy local protocol.
+
+### Fork / Project Contributors
+* Pure-Python XXTEA encryption, Tuya-Local setup architecture, concurrency queue, and Home Assistant 2026+ deprecation fixes developed by [@selvakk2k](https://github.com/selvakk2k) with assistance from **Claude** (Anthropic) and **Gemini/Antigravity** (Google DeepMind).
+
+Licensed under the **GNU Affero General Public License v3.0**. See the [LICENSE](LICENSE) file for the full license text.
