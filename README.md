@@ -29,9 +29,11 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 * **Instant Dashboard Feedback**: Switches respond instantly in the Home Assistant dashboard without waiting for network delays.
 
 ### 2. Simple & Private Setup
+* **Automatic Discovery (Zeroconf / mDNS)**: Automatically detects Tinxy devices on your local network and offers a two-step choice between Cloud-Assisted (API token) or Manual Offline (Device Key) setup.
 * **Cloud-Assisted Setup**: Uses your Tinxy account token once during setup to discover devices, fetch their private local keys (`mqttPassword`), and automatically find their IP addresses on your home network. **The token is never stored in Home Assistant.**
 * **Manual Offline Setup**: Set up devices directly with their local IP address and private key—no internet connection or cloud account needed.
-* **In-Place Credential Updates**: If you ever re-pair a device in the Tinxy app (which generates a new key), simply click **Configure** on the device card to update the key without deleting or breaking existing automations.
+* **Official Reconfigure Flow**: Click the **⋮** menu on any device card → **Reconfigure** to update the local IP address or Device Key in-place with instant validation.
+* **Automatic DHCP IP Sync**: Automatically updates device IP addresses when your router assigns a new DHCP address, without breaking automations or entity IDs.
 
 ### 3. Reliability & Hardware Protection
 * **Smart Command Queue**: Manages outgoing commands with safe spacing (~0.35s) and closes connections immediately (`Connection: close`). This prevents rapid button presses or automations from overloading the small microcontroller inside the switch.
@@ -39,7 +41,8 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 * **Subnet Auto-Detection**: Automatically searches across home IP ranges (`192.168.x.x`, `10.x.x.x`, `172.16.x.x`) to pre-fill device IP addresses during setup.
 
 ### 4. Diagnostics & Home Assistant Standards
-* **Clean Diagnostic Sensors**: Monitors Wi-Fi signal strength in dBm, connected Wi-Fi network (SSID), and local IP address directly on the device card.
+* **Multi-Node Diagnostic Sensors**: Monitors Wi-Fi signal strength in dBm, connected Wi-Fi network (SSID), and local IP address for every node on the device card.
+* **Actionable Error Diagnostics**: Provides clear guidance in logs if a command is rejected (HTTP 400), directing you to verify the Device Key in options or check time synchronization.
 * **Zero Database Clutter**: Eliminates recurring database writes and device registry churn during polling.
 
 ---
