@@ -15,7 +15,7 @@ from .const import DEFAULT_RATE_LIMIT_DELAY, DEFAULT_REQUEST_TIMEOUT
 from .crypto import encrypt_tinxy_payload
 
 _LOGGER = logging.getLogger(__name__)
-HEADERS = {"Content-Type": "application/json"}
+HEADERS = {"Content-Type": "application/json", "Connection": "close"}
 
 
 class TinxyConnectionException(Exception):
@@ -65,6 +65,7 @@ class TinxyLocalHub:
         self.device_queue: deque[QueuedCommand] = deque()
         self.device_worker_task: asyncio.Task | None = None
         self.last_command_time = 0.0
+        self.last_command_timestamp = 0
         self._shutdown = False
 
     async def validate_ip(
@@ -244,7 +245,13 @@ class TinxyLocalHub:
         web_session: aiohttp.ClientSession,
     ) -> bool:
         """Send authenticated POST /toggle to the device via pure aiohttp."""
-        encrypted_token = encrypt_tinxy_payload(mqtt_pass)
+        # Enforce strictly monotonic timestamp to prevent ESP hardware replay rejection (HTTP 400)
+        now_ts = int(time.time())
+        if now_ts <= self.last_command_timestamp:
+            now_ts = self.last_command_timestamp + 1
+        self.last_command_timestamp = now_ts
+
+        encrypted_token = encrypt_tinxy_payload(mqtt_pass, timestamp=now_ts)
         action_val = str(command.action if command.action is not None else 1)
 
         payload: dict[str, Any] = {
