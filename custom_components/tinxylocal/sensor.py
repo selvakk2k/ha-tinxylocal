@@ -60,6 +60,13 @@ class TinxyDiagnosticSensorBase(CoordinatorEntity[TinxyUpdateCoordinator], Senso
         self.is_multi_node = is_multi_node
 
     @property
+    def available(self) -> bool:
+        """Return true if device status is available."""
+        if not self.coordinator.data:
+            return False
+        return self.node_id in self.coordinator.data
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return device information."""
         metadata = self.coordinator.device_metadata.get(self.node_id, {})

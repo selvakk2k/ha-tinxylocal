@@ -128,10 +128,6 @@ class TinxySwitch(CoordinatorEntity[TinxyUpdateCoordinator], SwitchEntity):
             await self.hub.queue_command(
                 command, self.mqtt_pass, self.coordinator.web_session
             )
-        except Exception as err:
-            self._optimistic_state = None
-            self.async_write_ha_state()
-            _LOGGER.error("Failed turning on switch %s: %s", self._attr_name, err)
         finally:
             self._optimistic_state = None
             await self.coordinator.async_request_refresh()
@@ -150,10 +146,6 @@ class TinxySwitch(CoordinatorEntity[TinxyUpdateCoordinator], SwitchEntity):
             await self.hub.queue_command(
                 command, self.mqtt_pass, self.coordinator.web_session
             )
-        except Exception as err:
-            self._optimistic_state = None
-            self.async_write_ha_state()
-            _LOGGER.error("Failed turning off switch %s: %s", self._attr_name, err)
         finally:
             self._optimistic_state = None
             await self.coordinator.async_request_refresh()

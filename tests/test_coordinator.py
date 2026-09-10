@@ -305,3 +305,76 @@ async def test_hub_mutual_exclusion_lock():
     assert call_order[1].endswith("_end")
     assert call_order[2].endswith("_start")
     assert call_order[3].endswith("_end")
+
+
+@pytest.mark.asyncio
+async def test_diagnostic_sensor_and_lock_per_node_availability():
+    """Verify diagnostic sensors and locks check per-node availability against coordinator.data."""
+    from custom_components.tinxylocal.lock import TinxyLock
+    from custom_components.tinxylocal.sensor import TinxyIpSensor, TinxyRssiSensor, TinxySsidSensor
+
+    mock_coordinator = MagicMock()
+    mock_coordinator.device_metadata = {
+        "node_1": {"rssi": -60, "ip": "192.168.1.50", "ssid": "HomeWiFi"}
+    }
+    mock_hub = MagicMock()
+
+    rssi_sensor = TinxyRssiSensor(mock_coordinator, "node_1", "Living Room")
+    ip_sensor = TinxyIpSensor(mock_coordinator, "node_1", "Living Room")
+    ssid_sensor = TinxySsidSensor(mock_coordinator, "node_1", "Living Room")
+    lock_entity = TinxyLock(mock_coordinator, mock_hub, "node_1", "Main Door", "pass123")
+
+    # Case 1: Coordinator data is None / empty -> unavailable
+    mock_coordinator.data = None
+    assert not rssi_sensor.available
+    assert not ip_sensor.available
+    assert not ssid_sensor.available
+    assert not lock_entity.available
+
+    # Case 2: Node not in coordinator data (poll failed for this specific node) -> unavailable
+    mock_coordinator.data = {"node_2": {}}
+    assert not rssi_sensor.available
+    assert not ip_sensor.available
+    assert not ssid_sensor.available
+    assert not lock_entity.available
+
+    # Case 3: Node present in coordinator data -> available
+    mock_coordinator.data = {"node_1": {}}
+    assert rssi_sensor.available
+    assert ip_sensor.available
+    assert ssid_sensor.available
+    assert lock_entity.available
+
+
+@pytest.mark.asyncio
+async def test_switch_error_propagation_on_command_failure():
+    """Verify switch.async_turn_on propagates communication errors and resets optimistic state."""
+    from custom_components.tinxylocal.hub import TinxyLocalException
+    from custom_components.tinxylocal.switch import TinxySwitch
+
+    mock_coordinator = MagicMock()
+    mock_coordinator.data = {"node_1": {"Light_0": {"state": False}}}
+    mock_coordinator.device_metadata = {"node_1": {}}
+    mock_coordinator.nodes = [{"name": "Living Room"}]
+    mock_coordinator.async_request_refresh = AsyncMock()
+
+    mock_hub = MagicMock()
+    mock_hub.queue_command = AsyncMock(side_effect=TinxyLocalException("Network timeout"))
+
+    switch = TinxySwitch(
+        coordinator=mock_coordinator,
+        hub=mock_hub,
+        node_id="node_1",
+        name="Ceiling Light",
+        device_type="Switch",
+        relay_number=0,
+        mqtt_pass="pass123",
+    )
+    switch.async_write_ha_state = MagicMock()
+
+    # Exception must propagate rather than being silently swallowed
+    with pytest.raises(TinxyLocalException, match="Network timeout"):
+        await switch.async_turn_on()
+
+    assert switch._optimistic_state is None
+    mock_coordinator.async_request_refresh.assert_awaited_once()

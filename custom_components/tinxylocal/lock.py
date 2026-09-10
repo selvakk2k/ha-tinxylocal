@@ -63,6 +63,13 @@ class TinxyLock(CoordinatorEntity[TinxyUpdateCoordinator], LockEntity):
         return self._attr_is_locked
 
     @property
+    def available(self) -> bool:
+        """Return true if device status is available."""
+        if not self.coordinator.data:
+            return False
+        return self.node_id in self.coordinator.data
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return device information."""
         metadata = self.coordinator.device_metadata.get(self.node_id, {})
