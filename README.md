@@ -36,7 +36,8 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
    - [Manual Setup Workflow](#manual-setup-workflow)
    - [Updating Settings & Keys In-Place](#updating-settings--keys-in-place)
 7. [Troubleshooting](#troubleshooting)
-8. [Credits & License](#credits--license)
+8. [My Integrations & Lovelace Cards](#my-integrations--lovelace-cards)
+9. [Credits & License](#credits--license)
 
 ---
 
