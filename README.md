@@ -121,17 +121,13 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 
 ## Installation
 
-### Method 1: Using HACS (Recommended)
+### Method 1: Via HACS (Recommended)
 
-1. Ensure [HACS](https://hacs.xyz/) is installed in Home Assistant.
-2. Open **HACS** → **Integrations** → click the three dots (⋮) in the top-right corner.
-3. Select **Custom repositories**.
-4. Add the repository URL:
-   ```text
-   https://github.com/selvakk2k/ha-tinxylocal
-   ```
-5. Choose **Integration** as the category and click **Add**.
-6. Find **Tinxy Local Python**, click **Download**, and restart Home Assistant.
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=selvakk2k&repository=ha-tinxylocal&category=integration)
+
+1. Click the **Open repository in HACS** button above, or open **HACS** from your Home Assistant sidebar.
+2. If installing as a custom repository: click the top-right menu (⋮) → **Custom repositories** → Add `https://github.com/selvakk2k/ha-tinxylocal` (Category: *Integration*).
+3. Search for **Tinxy Local Python**, click **Download**, and restart Home Assistant.
 
 ### Method 2: Manual Installation
 
