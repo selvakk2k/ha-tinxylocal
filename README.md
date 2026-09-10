@@ -201,6 +201,19 @@ logger:
 
 ---
 
+## My Integrations & Lovelace Cards
+
+Explore companion integrations and custom cards tailored for Indian smart home appliances:
+
+| Appliance Category | Home Assistant Integration | Companion Lovelace Card |
+| :--- | :--- | :--- |
+| **Air Conditioners** | [Panasonic AC India (`ha-miraie-ac-in`)](https://github.com/selvakk2k/ha-miraie-ac-in) | [Panasonic AC India Card (`miraie-ac-card-in`)](https://github.com/selvakk2k/miraie-ac-card-in) |
+| **BLDC Ceiling Fans** | [Indian BLDC Fan IR (`superfan_ir`)](https://github.com/selvakk2k/superfan_ir) | [Indian BLDC Fan Card (`superfan-card`)](https://github.com/selvakk2k/superfan-card) |
+| **Washing Machines** | [IFB Washer Local (`ifb-washer-local`)](https://github.com/selvakk2k/ifb-washer-local) | [IFB Washer Card (`ifb-washer-card`)](https://github.com/selvakk2k/ifb-washer-card) |
+| **Smart Switches** | [Tinxy Local (`ha-tinxylocal`)](https://github.com/selvakk2k/ha-tinxylocal) | — |
+
+---
+
 ## Credits & License
 
 ### Upstream Authors & Contributors
