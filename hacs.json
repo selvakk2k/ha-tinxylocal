@@ -1,4 +1,7 @@
 {
   "name": "Tinxy Local Python",
-  "render_readme": true
+  "render_readme": true,
+  "country": [
+    "IN"
+  ]
 }
