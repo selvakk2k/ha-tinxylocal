@@ -206,13 +206,13 @@ logger:
 
 | Integration / Card | Category | Description | Status |
 | :--- | :--- | :--- | :--- |
-| [Panasonic MirAIe AC](https://github.com/selvakk2k/ha-miraie-ac-in) | Integration | Local IR & Cloud MQTT control for Panasonic MirAIe Air Conditioners | `Beta` |
-| [Panasonic MirAIe AC Card](https://github.com/selvakk2k/miraie-ac-card-in) | Lovelace Card | Modern Lovelace card for Panasonic MirAIe ACs | `Beta` |
-| [Superfan IR Native](https://github.com/selvakk2k/superfan_ir) | Integration | Native Home Assistant integration for Superfan ceiling fans | `Beta` |
-| [Superfan Card](https://github.com/selvakk2k/superfan-card) | Lovelace Card | Interactive Lovelace card with speed dial & mode toggles for Superfan | `Beta` |
+| [Panasonic AC India](https://github.com/selvakk2k/ha-miraie-ac-in) | Integration | Local IR & Cloud MQTT control for Panasonic MirAIe Air Conditioners | `Beta` |
+| [Panasonic AC India Card](https://github.com/selvakk2k/miraie-ac-card-in) | Lovelace Card | Modern Lovelace card for Panasonic MirAIe ACs | `Beta` |
+| [Indian BLDC Fan IR](https://github.com/selvakk2k/superfan_ir) | Integration | Native Home Assistant integration for Indian BLDC ceiling fans (Superfan, Atomberg) | `Beta` |
+| [Indian BLDC Fan Card](https://github.com/selvakk2k/superfan-card) | Lovelace Card | Interactive Lovelace card with speed dial & mode toggles for BLDC fans | `Beta` |
 | [IFB Washer Local](https://github.com/selvakk2k/ifb-washer-local) | Integration | Local Wi-Fi integration for IFB Front Load Washing Machines & Washer Dryers | `Beta` |
 | [IFB Washer Card](https://github.com/selvakk2k/ifb-washer-card) | Lovelace Card | Dedicated Lovelace card for IFB washers & dryers with animated drum | `Beta` |
-| [Tinxy Local](https://github.com/selvakk2k/ha-tinxylocal) | Integration | Local control for Tinxy smart switches and modules | `Stable` |
+| [Tinxy Local Python](https://github.com/selvakk2k/ha-tinxylocal) | Integration | Pure-Python local control for Tinxy smart switches and modules | `Stable` |
 
 ---
 
