@@ -18,7 +18,7 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 
 > [!CAUTION]
 > ### Critical Security & Credential Warnings
-> * **Never Share Your Tinxy API Token**: Tinxy account API tokens have **no expiration date and cannot be revoked** from the app or portal. If your API token is ever leaked publicly (e.g. in GitHub issues, forum posts, or diagnostic logs), the **only** way to invalidate it is to create a completely new Tinxy account.
+> * **Never Share Your Tinxy API Token**: Tinxy account API tokens have **no expiration date and cannot be revoked** from the app. If your API token is ever leaked publicly (e.g. in GitHub issues, forum posts, or diagnostic logs), the **only** way to invalidate it is to create a completely new Tinxy account.
 > * **Never Share Your Device Key (`mqttPassword`)**: Device keys do not expire. If a device key is exposed, the only way to invalidate it and generate a new key is to completely remove and re-pair the physical device in the Tinxy mobile app.
 
 
