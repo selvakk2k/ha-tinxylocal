@@ -204,14 +204,15 @@ logger:
 
 ## My Integrations & Lovelace Cards
 
-Explore companion integrations and custom cards tailored for Indian smart home appliances:
-
-| Appliance Category | Home Assistant Integration | Companion Lovelace Card |
-| :--- | :--- | :--- |
-| **Air Conditioners** | [Panasonic AC India (`ha-miraie-ac-in`)](https://github.com/selvakk2k/ha-miraie-ac-in) | [Panasonic AC India Card (`miraie-ac-card-in`)](https://github.com/selvakk2k/miraie-ac-card-in) |
-| **BLDC Ceiling Fans** | [Indian BLDC Fan IR (`superfan_ir`)](https://github.com/selvakk2k/superfan_ir) | [Indian BLDC Fan Card (`superfan-card`)](https://github.com/selvakk2k/superfan-card) |
-| **Washing Machines** | [IFB Washer Local (`ifb-washer-local`)](https://github.com/selvakk2k/ifb-washer-local) | [IFB Washer Card (`ifb-washer-card`)](https://github.com/selvakk2k/ifb-washer-card) |
-| **Smart Switches** | [Tinxy Local (`ha-tinxylocal`)](https://github.com/selvakk2k/ha-tinxylocal) | — |
+| Integration / Card | Category | Description | Status |
+| :--- | :--- | :--- | :--- |
+| [Panasonic MirAIe AC](https://github.com/selvakk2k/ha-miraie-ac-in) | Integration | Local IR & Cloud MQTT control for Panasonic MirAIe Air Conditioners | `Beta` |
+| [Panasonic MirAIe AC Card](https://github.com/selvakk2k/miraie-ac-card-in) | Lovelace Card | Modern Lovelace card for Panasonic MirAIe ACs | `Beta` |
+| [Superfan IR Native](https://github.com/selvakk2k/superfan_ir) | Integration | Native Home Assistant integration for Superfan ceiling fans | `Beta` |
+| [Superfan Card](https://github.com/selvakk2k/superfan-card) | Lovelace Card | Interactive Lovelace card with speed dial & mode toggles for Superfan | `Beta` |
+| [IFB Washer Local](https://github.com/selvakk2k/ifb-washer-local) | Integration | Local Wi-Fi integration for IFB Front Load Washing Machines & Washer Dryers | `Beta` |
+| [IFB Washer Card](https://github.com/selvakk2k/ifb-washer-card) | Lovelace Card | Dedicated Lovelace card for IFB washers & dryers with animated drum | `Beta` |
+| [Tinxy Local](https://github.com/selvakk2k/ha-tinxylocal) | Integration | Local control for Tinxy smart switches and modules | `Stable` |
 
 ---
 
