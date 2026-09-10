@@ -12,11 +12,14 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 > [!IMPORTANT]
 > This integration works with Tinxy devices that have **local HTTP control enabled**. It is **not compatible** with Tinxy EVA smart bulbs, which communicate over a proprietary RF mesh back to an EVA hub and do not have a local Wi-Fi IP address.
 
+> [!IMPORTANT]
+> ### Finding Your API Token
+> In the Tinxy mobile app, tap the **hamburger menu icon (☰) in the top-right corner** and select **API Token**.
+
 > [!CAUTION]
 > ### Critical Security & Credential Warnings
 > * **Never Share Your Tinxy API Token**: Tinxy account API tokens have **no expiration date and cannot be revoked** from the app or portal. If your API token is ever leaked publicly (e.g. in GitHub issues, forum posts, or diagnostic logs), the **only** way to invalidate it is to create a completely new Tinxy account.
 > * **Never Share Your Device Key (`mqttPassword`)**: Device keys do not expire. If a device key is exposed, the only way to invalidate it and generate a new key is to completely remove and re-pair the physical device in the Tinxy mobile app.
-> * **Finding Your API Token**: In the Tinxy mobile app, tap the **hamburger menu icon (☰) in the top-right corner** and select **API Token**.
 
 
 ---
