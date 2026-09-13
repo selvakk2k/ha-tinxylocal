@@ -1,5 +1,9 @@
 # Tinxy Local Python (`ha-tinxylocal`)
 
+<p align="center">
+  <img src="custom_components/tinxylocal/brand/logo.png" alt="Tinxy Local Python Logo" width="300">
+</p>
+
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=flat-square)](https://github.com/hacs/integration)
 [![Version](https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal?style=flat-square)](https://github.com/selvakk2k/ha-tinxylocal/releases)
 [![AI-Assisted](https://img.shields.io/badge/AI%20Assisted-Antigravity%20%7C%20Claude-blueviolet?style=flat-square&logo=google)](https://github.com/selvakk2k)
@@ -78,6 +82,9 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 | **Tinxy Fan Controllers** | Compatible | 3-Speed Control (33%, 66%, 100%), Speed Memory on Toggle |
 | **Tinxy Door Locks** | Compatible | Pulse Unlock Relay |
 
+> [!NOTE]
+> Models not listed in this table are not blocked. Any Tinxy device with local HTTP control enabled on your home Wi-Fi network will function normally. The table above lists physically tested units, not a hard compatibility limit.
+
 ---
 
 ## Important Notes & Hardware Limits
@@ -121,6 +128,8 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 ---
 
 ## Installation
+
+* **Prerequisites**: Home Assistant **2024.1.0** or newer.
 
 ### Method 1: Via HACS (Recommended)
 
@@ -219,6 +228,7 @@ logger:
 
 ### Upstream Authors & Contributors
 * Originally created by [@arevindh](https://github.com/arevindh) and community contributors in [`arevindh/tinxylocal`](https://github.com/arevindh/tinxylocal).
+* Licensed under **AGPL-3.0** in accordance with the original upstream project.
 
 ### Fork Maintainers & Contributors
 * **Lead Architecture & Hardware Testing**: [@selvakk2k](https://github.com/selvakk2k) — hardware validation on physical Tinxy switches, requirements, and release maintenance.
