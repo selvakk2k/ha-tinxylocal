@@ -102,6 +102,13 @@ class TinxyFan(CoordinatorEntity[TinxyUpdateCoordinator], FanEntity):
         return relay_info.get("state")
 
     @property
+    def available(self) -> bool:
+        """Return true if device status is available."""
+        if not self.coordinator.data:
+            return False
+        return self.node_id in self.coordinator.data
+
+    @property
     def percentage(self) -> int | None:
         """Return current speed percentage."""
         if self._optimistic_percentage is not None:

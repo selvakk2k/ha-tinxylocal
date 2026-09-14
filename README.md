@@ -158,6 +158,9 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 > [!NOTE]
 > **Only Discovers Already-Commissioned Devices**: Auto-detection discovers Tinxy devices that are already connected to your home Wi-Fi network. If a device is unboxed or factory-reset, it broadcasts its own temporary Wi-Fi access point (`Tinxy-XXXX`) and cannot be seen by Home Assistant until you join it to your home Wi-Fi via the Tinxy mobile app.
 
+> [!NOTE]
+> **Candidate Subnet Scanning**: During initial setup, the discovery engine inspects your local network adapters and probes common home router subnets (including `192.168.29.0/24` for JioFiber, `192.168.31.0/24` for Mi WiFi, and standard `192.168.1.0/24` / `192.168.0.0/24` / `10.0.0.0/24` ranges) with a fast 0.9s timeout to discover devices seamlessly across subnets.
+
 Tinxy devices on your Wi-Fi network are automatically discovered by Home Assistant. When a discovery notification appears:
 1. Click **Configure**.
 2. Choose your preferred setup path:
