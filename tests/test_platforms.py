@@ -64,3 +64,10 @@ def test_platform_availability_parity(mock_node):
     assert switch.available is True
     assert lock.available is True
     assert sensor.available is True
+
+    # 4. When coordinator last_update_success is False (failed refresh with retained data)
+    mock_coordinator.last_update_success = False
+    assert fan.available is False
+    assert switch.available is False
+    assert lock.available is False
+    assert sensor.available is False

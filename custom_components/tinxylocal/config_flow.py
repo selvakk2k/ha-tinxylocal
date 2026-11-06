@@ -35,6 +35,21 @@ from .tinxycloud import TinxyAuthenticationException, TinxyCloud, TinxyHostConfi
 _LOGGER = logging.getLogger(__name__)
 
 
+def _chip_id(device: dict[str, Any] | None) -> str | None:
+    """Read a cloud device's chip id with null-safety for hub-paired devices."""
+    if not isinstance(device, dict):
+        return None
+    uuid_ref = device.get("uuidRef")
+    if isinstance(uuid_ref, dict):
+        cid = uuid_ref.get("uuid")
+        if cid:
+            return str(cid).strip()
+    direct_cid = device.get("chip_id")
+    if direct_cid:
+        return str(direct_cid).strip()
+    return None
+
+
 async def async_discover_tinxy_devices(
     hass: Any,
     target_chip_ids: set[str] | None = None,
@@ -167,10 +182,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Proactive DHCP IP synchronization if device is already configured
         for entry in self._async_current_entries():
-            entry_chip_id = (
-                entry.data.get("device", {}).get("uuidRef", {}).get("uuid")
-                or entry.data.get("device", {}).get("chip_id")
-            )
+            entry_chip_id = _chip_id(entry.data.get("device"))
             if entry.unique_id in (unique_id, chip_id) or (entry_chip_id and entry_chip_id in (unique_id, chip_id)):
                 if entry.data.get(CONF_HOST) != host:
                     self.hass.config_entries.async_update_entry(
@@ -228,7 +240,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     matched_device = None
                     for d in dev_list:
-                        cid = str(d.get("uuidRef", {}).get("uuid") or d.get("chip_id") or "").strip()
+                        cid = _chip_id(d) or ""
                         did = str(d.get("_id") or "").strip()
                         if chip_id in (cid, did):
                             matched_device = d
@@ -378,9 +390,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                     target_chip_ids = set()
                     for d in dev_list:
-                        cid = d.get("uuidRef", {}).get("uuid") or d.get("chip_id")
+                        cid = _chip_id(d)
                         if cid:
-                            target_chip_ids.add(str(cid).strip())
+                            target_chip_ids.add(cid)
 
                     try:
                         self.discovered_devices = await async_discover_tinxy_devices(
@@ -436,7 +448,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         for dev in available_devices:
             d_id = dev["_id"]
             d_name = dev.get("name", "Tinxy Device")
-            chip_id = str(dev.get("uuidRef", {}).get("uuid") or dev.get("chip_id") or "").strip()
+            chip_id = _chip_id(dev) or ""
 
             detected_info = self.discovered_devices.get(chip_id)
             if detected_info and "ip" in detected_info:

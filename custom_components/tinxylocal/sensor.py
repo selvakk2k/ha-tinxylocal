@@ -62,7 +62,7 @@ class TinxyDiagnosticSensorBase(CoordinatorEntity[TinxyUpdateCoordinator], Senso
     @property
     def available(self) -> bool:
         """Return true if device status is available."""
-        if not self.coordinator.data:
+        if not super().available or not self.coordinator.data:
             return False
         return self.node_id in self.coordinator.data
 

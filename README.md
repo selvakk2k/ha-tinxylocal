@@ -238,6 +238,7 @@ logger:
 ### Fork Maintainers & Contributors
 * **Lead Architecture & Hardware Testing**: [@selvakk2k](https://github.com/selvakk2k) — hardware validation on physical Tinxy switches, requirements, and release maintenance.
 * **Implementation & Engineering**: **Antigravity** (Google DeepMind) — pure-Python XXTEA encryption, asynchronous queue concurrency architecture, Home Assistant lifecycle migration, and automated test suite.
+* **Automated Code Review & Auditing**: **CodeRabbit** ([@coderabbitai](https://github.com/coderabbitai)) — automated pull request and pre-commit code reviews, edge case detection, and security verification.
 * **Code Review & Auditing**: **Claude** (Anthropic) — architectural review, edge-case analysis, and upstream compatibility validation.
 
 Licensed under the **GNU Affero General Public License v3.0**. See [LICENSE](LICENSE) for details.
