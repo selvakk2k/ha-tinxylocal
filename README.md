@@ -104,41 +104,18 @@ This repository is a modern, pure-Python rewrite of `arevindh/tinxylocal`. It re
 
 Because this integration uses the exact same domain (`tinxylocal`), **all your existing entity names (e.g. `switch.living_room_foyer_light`), dashboard cards, and automations continue working with zero changes.**
 
-### Migration Steps (Home Assistant 2026.11+ Marketplace):
+### Migration Steps:
 
-1. In Home Assistant, go to **Settings** → **Marketplace**.
-2. Open the **Installed** tab, find the old **Tinxy Local** integration, and remove/uninstall it from Marketplace.
-   > [!TIP]
-   > **Preserving Configured Devices**: Do **not** delete the integration under *Settings → Devices & Services*, otherwise your entity IDs, automations, and dashboard cards will be deleted. Only remove the old repository from Marketplace.
-3. *(Recommended)* Open your Home Assistant terminal or Studio Code Server add-on, and delete the old binary build folder to free up ~36 MB of disk space:
+1. **Remove the old repository** (without deleting the integration under *Settings → Devices & Services*, so your entity IDs, automations, and dashboard cards stay intact):
+   - **Home Assistant `2026.11+` (Marketplace):** Go to **Settings** → **Marketplace** → **Installed**, find the old **Tinxy Local** integration, and uninstall/remove it from Marketplace.
+   - **Home Assistant `<= 2026.10` (Legacy HACS):** Open **HACS** → **Integrations**, click the three dots (⋮) on the old **Tinxy Local** card, and select **Remove**. When HACS warns that the integration is currently configured, **click IGNORE** (do not remove it from *Devices & Services*).
+2. *(Recommended)* Open your Home Assistant terminal or Studio Code Server add-on, and delete the old binary build folder to free up ~36 MB of disk space:
    ```bash
    rm -rf /config/custom_components/tinxylocal/build
    ```
-4. In **Settings** → **Marketplace**, select **Add from link** in the upper-right corner.
-5. Under **GitHub link**, enter `https://github.com/selvakk2k/ha-tinxylocal` (connect your GitHub account if prompted), then select **Add**. *(If prompted for **Type**, select **Integration** and select **Add** again.)*
-6. Open **Tinxy Local Python** from the list, select **Download**, and restart Home Assistant.
-
-<details>
-<summary>Home Assistant 2026.10 or older (Legacy HACS Migration)</summary>
-
-1. In Home Assistant, open **HACS** → **Integrations**.
-2. Find the old **Tinxy Local** integration card.
-3. Click the three dots (⋮) on the card and select **Remove**.
-   > [!TIP]
-   > **Handling the HACS Warning Dialog**: When you click Remove, HACS will detect existing configured devices and display a dialog stating *"This integration is currently configured... navigate to the integration to remove it or ignore"*. **Click IGNORE**. Do **not** remove the integration under *Settings → Devices & Services*, otherwise your entity IDs, automations, and dashboard cards will be deleted. Clicking **Ignore** safely unlinks the old repository from HACS while preserving all your configured devices in Home Assistant.
-4. *(Recommended)* Open your Home Assistant terminal or Studio Code Server add-on, and delete the old binary build folder to free up ~36 MB of disk space:
-   ```bash
-   rm -rf /config/custom_components/tinxylocal/build
-   ```
-5. In HACS, click the three dots (⋮) in the top-right corner → **Custom repositories**.
-6. Under **Repository**, enter:
-   ```text
-   https://github.com/selvakk2k/ha-tinxylocal
-   ```
-7. Select **Integration** as the category and click **Add**.
-8. Find **Tinxy Local Python**, click **Download**, and restart Home Assistant.
-
-</details>
+3. **Install Tinxy Local Python**:
+   - **Home Assistant `2026.11+` (Marketplace):** In **Settings** → **Marketplace**, select **Add from link** (upper-right), enter `https://github.com/selvakk2k/ha-tinxylocal` (connect GitHub if prompted), select **Add** *(Type: **Integration**)*, open **Tinxy Local Python**, select **Download**, and restart Home Assistant.
+   - **Home Assistant `<= 2026.10` (Legacy HACS):** In **HACS**, click the top-right menu (⋮) → **Custom repositories**, add `https://github.com/selvakk2k/ha-tinxylocal` with category **Integration**, download **Tinxy Local Python**, and restart Home Assistant.
 
 Home Assistant will automatically run the upgrade migration, strip any old plaintext account tokens from storage for privacy, and load your devices using the new code.
 
@@ -150,25 +127,16 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 
 ### Method 1: Via Home Assistant Marketplace (Recommended)
 
-*Requires Home Assistant **2026.11** or newer. (On an older version? Expand the legacy HACS instructions below.)*
-
 [![Open your Home Assistant instance and open a repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=selvakk2k&repository=ha-tinxylocal&category=integration)
 
-1. Click the **Open Marketplace repository** button above, or go to **Settings** → **Marketplace** in Home Assistant.
-2. In the upper-right corner, select **Add from link**.
-3. Under **GitHub link**, enter `https://github.com/selvakk2k/ha-tinxylocal` (connect your GitHub account if prompted), then select **Add**. *(If prompted for **Type**, select **Integration** and select **Add** again.)*
-4. Open **Tinxy Local Python** from the list, select **Download**, and restart Home Assistant.
+**Home Assistant `2026.11+` (Marketplace):**
+1. Click the **Open Marketplace repository** button above, or go to **Settings** → **Marketplace**.
+2. Select **Add from link** (upper-right), enter `https://github.com/selvakk2k/ha-tinxylocal` (connect GitHub if prompted), and select **Add** *(if prompted for **Type**, select **Integration**)*.
+3. Open **Tinxy Local Python**, select **Download**, and restart Home Assistant.
 
-<details>
-<summary>Home Assistant 2026.10 or older (Legacy HACS)</summary>
-
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=selvakk2k&repository=ha-tinxylocal&category=integration)
-
-1. Click the **Open repository in HACS** button above, or open **HACS** from your Home Assistant sidebar.
-2. Click the top-right menu (⋮) → **Custom repositories** → Add `https://github.com/selvakk2k/ha-tinxylocal` with category **Integration**.
-3. Search for **Tinxy Local Python**, click **Download**, and restart Home Assistant.
-
-</details>
+**Home Assistant `<= 2026.10` (Legacy HACS):**
+1. Open **HACS** in your sidebar → top-right menu (⋮) → **Custom repositories** → Add `https://github.com/selvakk2k/ha-tinxylocal` with category **Integration**.
+2. Search for **Tinxy Local Python**, click **Download**, and restart Home Assistant.
 
 ### Method 2: Manual Installation
 
