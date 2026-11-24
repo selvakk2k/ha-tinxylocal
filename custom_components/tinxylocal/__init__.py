@@ -85,11 +85,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass, nodes, web_session, polling_interval, request_timeout, config_entry=entry, hubs=hubs
     )
 
-    hass.data[DOMAIN][entry.entry_id] = {
+    entry_data = {
         "coordinator": coordinator,
         "hubs": hubs,
         "nodes": nodes,
     }
+    try:
+        entry.runtime_data = entry_data
+    except AttributeError:
+        pass
+    hass.data[DOMAIN][entry.entry_id] = entry_data
 
     # Initial data load
     await coordinator.async_config_entry_first_refresh()
@@ -112,14 +117,17 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    entry_data = hass.data[DOMAIN].get(entry.entry_id, {})
+    entry_data = (
+        getattr(entry, "runtime_data", None)
+        or hass.data[DOMAIN].get(entry.entry_id, {})
+    )
     hubs = entry_data.get("hubs", [])
     for hub in hubs:
         await hub.shutdown()
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        hass.data[DOMAIN].pop(entry.entry_id, None)
 
     return unload_ok
 

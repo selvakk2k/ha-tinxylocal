@@ -22,7 +22,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Tinxy diagnostic sensors."""
-    entry_data = hass.data[DOMAIN][entry.entry_id]
+    entry_data = getattr(entry, "runtime_data", None) or hass.data[DOMAIN][entry.entry_id]
     coordinator: TinxyUpdateCoordinator = entry_data["coordinator"]
 
     sensors: list[TinxyDiagnosticSensorBase] = []
