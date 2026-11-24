@@ -117,9 +117,11 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    runtime_data = getattr(entry, "runtime_data", None)
     entry_data = (
-        getattr(entry, "runtime_data", None)
-        or hass.data[DOMAIN].get(entry.entry_id, {})
+        runtime_data
+        if isinstance(runtime_data, dict)
+        else hass.data[DOMAIN].get(entry.entry_id, {})
     )
     hubs = entry_data.get("hubs", [])
     for hub in hubs:

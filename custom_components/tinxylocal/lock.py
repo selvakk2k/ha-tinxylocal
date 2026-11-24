@@ -23,7 +23,12 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Tinxy locks from a config entry."""
-    entry_data = getattr(entry, "runtime_data", None) or hass.data[DOMAIN][entry.entry_id]
+    runtime_data = getattr(entry, "runtime_data", None)
+    entry_data = (
+        runtime_data
+        if isinstance(runtime_data, dict)
+        else hass.data[DOMAIN][entry.entry_id]
+    )
     coordinator: TinxyUpdateCoordinator = entry_data["coordinator"]
     hub: TinxyLocalHub = entry_data["hubs"][0]
     mqtt_pass: str = entry.data.get(CONF_MQTT_PASS, "")

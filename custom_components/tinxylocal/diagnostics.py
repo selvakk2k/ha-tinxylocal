@@ -34,9 +34,11 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a Tinxy Local config entry."""
+    runtime_data = getattr(entry, "runtime_data", None)
     entry_data = (
-        getattr(entry, "runtime_data", None)
-        or hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
+        runtime_data
+        if isinstance(runtime_data, dict)
+        else hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
     )
 
     coordinator = entry_data.get("coordinator") if isinstance(entry_data, dict) else None
