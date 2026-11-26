@@ -236,6 +236,7 @@ logger:
 
 ### Upstream Authors & Contributors
 * Originally created by [@arevindh](https://github.com/arevindh) and community contributors in [`arevindh/tinxylocal`](https://github.com/arevindh/tinxylocal).
+* [@Dr-Blank](https://github.com/Dr-Blank) — identified and fixed non-Tinxy zeroconf host probing (e.g., ESPHome-reflashed boards) in [`arevindh/tinxylocal#32`](https://github.com/arevindh/tinxylocal/pull/32).
 * Licensed under **AGPL-3.0** in accordance with the original upstream project.
 
 ### Fork Maintainers & Contributors

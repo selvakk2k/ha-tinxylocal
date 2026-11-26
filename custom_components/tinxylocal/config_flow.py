@@ -162,23 +162,26 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         session = async_get_clientsession(self.hass)
         hub = TinxyLocalHub(self.hass, host)
+        # The `tinxy*` mDNS matcher also catches non-Tinxy hosts that kept the
+        # hostname (such as a Tinxy board reflashed with ESPHome, which answers
+        # /info with 404). Abort rather than prompting to configure a non-Tinxy host.
         try:
             info = await hub.fetch_device_data({}, session)
-        except Exception:
-            info = None
+        except Exception as err:
+            _LOGGER.debug(
+                "Zeroconf probe for %s failed (%s); aborting discovery", host, err
+            )
+            return self.async_abort(reason="cannot_connect")
 
-        chip_id = None
-        if info and isinstance(info, dict):
-            chip_id = info.get("chip_id")
+        if not isinstance(info, dict) or not info.get("chip_id"):
+            _LOGGER.debug(
+                "Zeroconf host %s did not return a valid Tinxy /info payload; aborting",
+                host,
+            )
+            return self.async_abort(reason="cannot_connect")
 
-        if not chip_id:
-            name_parts = discovery_info.name.split(".")[0]
-            if "-" in name_parts:
-                chip_id = name_parts.split("-", 1)[1]
-            else:
-                chip_id = name_parts
-
-        unique_id = str(chip_id).strip() if chip_id else f"tinxy_{host.replace('.', '_')}"
+        chip_id = info["chip_id"]
+        unique_id = str(chip_id).strip()
 
         # Proactive DHCP IP synchronization if device is already configured
         for entry in self._async_current_entries():

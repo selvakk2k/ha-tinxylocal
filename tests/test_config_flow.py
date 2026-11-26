@@ -526,3 +526,66 @@ async def test_zeroconf_fetch_device_data_signature(hass):
     mock_fetch.assert_called_once()
     assert result["type"] == FlowResultType.MENU
     assert result["step_id"] == "zeroconf_confirm"
+
+
+@pytest.mark.asyncio
+async def test_zeroconf_aborts_on_non_tinxy_host(hass):
+    """Test zeroconf aborts with cannot_connect when /info fails (e.g. ESPHome 404)."""
+    import ipaddress
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+    from custom_components.tinxylocal.hub import TinxyLocalException
+
+    discovery_info = ZeroconfServiceInfo(
+        ip_address=ipaddress.ip_address("192.168.0.170"),
+        ip_addresses=[ipaddress.ip_address("192.168.0.170")],
+        port=80,
+        hostname="tinxy-esphome.local.",
+        type="_http._tcp.local.",
+        name="tinxy-esphome._http._tcp.local.",
+        properties={},
+    )
+
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {}
+
+    with patch(
+        "custom_components.tinxylocal.config_flow.TinxyLocalHub.fetch_device_data",
+        new_callable=AsyncMock,
+        side_effect=TinxyLocalException("Connection error: Request failed with status 404"),
+    ):
+        result = await flow.async_step_zeroconf(discovery_info)
+
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "cannot_connect"
+
+
+@pytest.mark.asyncio
+async def test_zeroconf_aborts_when_missing_chip_id(hass):
+    """Test zeroconf aborts with cannot_connect when /info lacks chip_id."""
+    import ipaddress
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+
+    discovery_info = ZeroconfServiceInfo(
+        ip_address=ipaddress.ip_address("192.168.0.171"),
+        ip_addresses=[ipaddress.ip_address("192.168.0.171")],
+        port=80,
+        hostname="tinxy-unknown.local.",
+        type="_http._tcp.local.",
+        name="tinxy-unknown._http._tcp.local.",
+        properties={},
+    )
+
+    flow = TinxyLocalConfigFlow()
+    flow.hass = hass
+    flow.context = {}
+
+    with patch(
+        "custom_components.tinxylocal.config_flow.TinxyLocalHub.fetch_device_data",
+        new_callable=AsyncMock,
+        return_value={"status": "ok"},
+    ):
+        result = await flow.async_step_zeroconf(discovery_info)
+
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "cannot_connect"
