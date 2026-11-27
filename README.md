@@ -4,12 +4,14 @@
   <img src="custom_components/tinxylocal/brand/logo.png" alt="Tinxy Local Python Logo" width="300">
 </p>
 
+<!-- ha-marketplace:exclude-start -->
 <p align="center">
   <a href="https://www.home-assistant.io/integrations/marketplace/"><img src="https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg?style=flat-square" alt="Marketplace Custom"></a>
   <a href="https://github.com/selvakk2k/ha-tinxylocal/releases"><img src="https://img.shields.io/github/v/release/selvakk2k/ha-tinxylocal?style=flat-square" alt="Version"></a>
   <a href="https://github.com/selvakk2k"><img src="https://img.shields.io/badge/AI%20Assisted-Antigravity%20%7C%20Claude%20%7C%20CodeRabbit-blueviolet?style=flat-square" alt="AI-Assisted"></a>
   <a href="https://aiattribution.github.io/interpret-attribution"><img src="https://img.shields.io/badge/AI%20Attribution-AIA%20PAI%20Nc%20Hin-orange?style=flat-square" alt="AI Attribution"></a>
 </p>
+<!-- ha-marketplace:exclude-end -->
 
 A fast, pure-Python Home Assistant integration for **100% local control** of **Tinxy Smart Devices** (smart switches, fan controllers, and pulse door locks) over your home Wi-Fi network.
 
@@ -123,6 +125,7 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 
 ---
 
+<!-- ha-marketplace:exclude-start -->
 ## Installation
 
 * **Prerequisites**: Home Assistant **2024.1.0** or newer.
@@ -147,6 +150,7 @@ Home Assistant will automatically run the upgrade migration, strip any old plain
 3. Restart Home Assistant.
 
 ---
+<!-- ha-marketplace:exclude-end -->
 
 ## Setup & Configuration
 
@@ -215,6 +219,7 @@ logger:
 
 ---
 
+<!-- ha-marketplace:exclude-start -->
 ## My Integrations & Lovelace Cards
 
 | Integration / Card | Category | Description | Status |
@@ -231,6 +236,7 @@ logger:
 | [Tinxy Local Python](https://github.com/selvakk2k/ha-tinxylocal) | Integration | Pure-Python local control for Tinxy smart switches and modules | `Stable` |
 
 ---
+<!-- ha-marketplace:exclude-end -->
 
 ## Credits & License
 
